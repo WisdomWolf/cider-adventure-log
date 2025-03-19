@@ -1,0 +1,26 @@
+version: '3.7'
+
+services:
+  frontend:
+    container_name: cider-log-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:80
+  api:
+    container_name: cider-log-api
+    environment:
+      PORT: 8000
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    expose:
+      - 8000
+  db:
+    image: postgres:17.4-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+
+volumes:
+  postgres_data:
