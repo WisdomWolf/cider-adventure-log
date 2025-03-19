@@ -17,8 +17,8 @@ CORS(app)
 # Models
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    flavor = db.Column(db.String(100), nullable=False)
     brand = db.Column(db.String(100), nullable=False)
+    flavor = db.Column(db.String(100), nullable=False)
     barcode = db.Column(db.String(100), nullable=True)
     description = db.Column(db.Text, nullable=True)
     image = db.Column(db.LargeBinary, nullable=True)

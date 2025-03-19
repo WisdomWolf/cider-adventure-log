@@ -78,6 +78,10 @@
         uploadedImage: null, // Holds the uploaded image file
       };
     },
+    mounted() {
+        console.log("Form | Product Brands:", this.productBrands);
+        console.log("Form | Product Flavors:", this.productFlavors);
+    },
     methods: {
       submitProduct() {
         const formData = new FormData();

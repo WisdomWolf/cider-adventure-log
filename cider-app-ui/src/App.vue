@@ -7,15 +7,11 @@
         <ProductTable
           :headers="headers"
           :products="products"
+          :productBrands="productBrands"
+          :productFlavors="productFlavors"
           @view-product="fetchProductDetails"
         />
 
-        <!-- Add Product Form -->
-        <ProductForm
-          :productBrands="productBrands"
-          :productFlavors="productFlavors"
-          @add-product="addProduct"
-        />
       </div>
       <!-- Product Details -->
       <ProductDetails
@@ -97,6 +93,8 @@ export default {
   },
   mounted() {
     this.fetchProducts();
+    console.log("App | Product Brands:", this.productBrands);
+    console.log("App | Product Flavors:", this.productFlavors);
   },
 };
 </script>
