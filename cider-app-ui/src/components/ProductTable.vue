@@ -4,6 +4,10 @@
         <v-card-title>
           Product Table
           <v-spacer></v-spacer>
+          <!-- Add New Product Button -->
+          <v-btn color="primary" @click="showAddProductDialog = true">
+            Add New Product
+          </v-btn>
         </v-card-title>
         <v-card-text>
           <!-- Search Input -->
@@ -24,17 +28,17 @@
           dense
         >
           <template v-slot:[`item.actions`]="{ item }">
-            <v-btn color="primary" @click="selectProduct(item)">
-              View
+            <!-- View Button -->
+            <v-btn icon color="primary" @click="selectProduct(item)">
+              <v-icon>mdi-eye</v-icon>
+            </v-btn>
+            <!-- Delete Button -->
+            <v-btn icon color="red" @click="confirmDelete(item)">
+              <v-icon>mdi-trash-can</v-icon>
             </v-btn>
           </template>
         </v-data-table>
       </v-card>
-      <v-spacer></v-spacer>
-      <!-- Add New Product Button -->
-      <v-btn color="primary" @click="showAddProductDialog = true">
-            Add New Product
-        </v-btn>
   
       <!-- Add Product Dialog -->
       <v-dialog v-model="showAddProductDialog" max-width="600px">
@@ -54,6 +58,23 @@
             <v-spacer></v-spacer>
             <v-btn color="blue darken-1" text @click="showAddProductDialog = false">
               Close
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+  
+      <!-- Delete Confirmation Dialog -->
+      <v-dialog v-model="showDeleteDialog" max-width="400px">
+        <v-card>
+          <v-card-title class="text-h6">Confirm Deletion</v-card-title>
+          <v-card-text>
+            Are you sure you want to delete this product? This action cannot be undone.
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="red" text @click="deleteProduct">Delete</v-btn>
+            <v-btn color="blue darken-1" text @click="showDeleteDialog = false">
+              Cancel
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -84,6 +105,8 @@
       return {
         search: "",
         showAddProductDialog: false, // Controls the visibility of the Add Product dialog
+        showDeleteDialog: false, // Controls the visibility of the Delete Confirmation dialog
+        productToDelete: null, // Stores the product to be deleted
         headers: [
           { text: "Brand", value: "brand", sortable: true },
           { text: "Flavor", value: "flavor", sortable: true },
@@ -92,10 +115,6 @@
           { text: "Actions", value: "actions", sortable: false },
         ],
       };
-    },
-    mounted() {
-        console.log("Table | Product Brands:", this.productBrands);
-        console.log("Table | Product Flavors:", this.productFlavors);
     },
     computed: {
       filteredProducts() {
@@ -117,6 +136,17 @@
       selectProduct(product) {
         // Emit the selected product to the parent component
         this.$emit("view-product", product);
+      },
+      confirmDelete(product) {
+        // Open the confirmation dialog and store the product to delete
+        this.productToDelete = product;
+        this.showDeleteDialog = true;
+      },
+      deleteProduct() {
+        // Emit the delete event to the parent component
+        this.$emit("delete-product", this.productToDelete);
+        this.showDeleteDialog = false; // Close the confirmation dialog
+        this.productToDelete = null; // Reset the product to delete
       },
     },
   };

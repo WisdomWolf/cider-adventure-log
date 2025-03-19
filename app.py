@@ -131,6 +131,16 @@ def add_rating(product_id):
     return jsonify({"message": "Rating added successfully!"}), 201
 
 
+@app.route('/products/<int:product_id>', methods=['DELETE'])
+def delete_product(product_id):
+    product = Product.query.get(product_id)
+    if product:
+        db.session.delete(product)
+        db.session.commit()
+        return jsonify({"message": "Product deleted successfully!"}), 200
+    return jsonify({"message": "Product not found"}), 404
+
+
 @app.route('/products/<int:product_id>/average-rating', methods=['GET'])
 def get_average_rating(product_id):
     product = Product.query.get(product_id)

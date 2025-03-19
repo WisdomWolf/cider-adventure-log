@@ -3,15 +3,14 @@
     <v-container>
       <h1 class="text-center">Cider Adventure Log</h1>
       <div v-if="!selectedProduct">
-        <!-- Product Table -->
         <ProductTable
-          :headers="headers"
           :products="products"
           :productBrands="productBrands"
           :productFlavors="productFlavors"
+          @add-product="addProduct"
           @view-product="fetchProductDetails"
+          @delete-product="deleteProduct"
         />
-
       </div>
       <!-- Product Details -->
       <ProductDetails
@@ -88,6 +87,14 @@ export default {
         this.fetchProducts(); // Refresh the product list after adding a new product
       } catch (error) {
         console.error("Error adding product:", error);
+      }
+    },
+    async deleteProduct(product) {
+      try {
+        await axios.delete(`/products/${product.id}`);
+        this.fetchProducts(); // Refresh the product list after deletion
+      } catch (error) {
+        console.error("Error deleting product:", error);
       }
     },
   },
