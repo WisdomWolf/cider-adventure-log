@@ -68,7 +68,10 @@ def get_product_details(product_id):
         "id": product.id,
         "flavor": product.flavor,
         "brand": product.brand,
-        "barcodes": [barcode.code for barcode in product.barcodes],
+        "barcodes": [
+                {"id": barcode.id, "code": barcode.code}
+                for barcode in product.barcodes
+        ],
         "description": product.description,
         "image": image_base64,
         "ratings": ratings,
@@ -84,7 +87,10 @@ def get_products():
             "id": p.id,
             "brand": p.brand,
             "flavor": p.flavor,
-            "barcodes": p.barcodes,
+            "barcodes": [
+                {"id": barcode.id, "code": barcode.code}
+                for barcode in p.barcodes
+            ],
             "average_rating": p.average_rating
         }
         for p in products
@@ -115,11 +121,16 @@ def add_product():
     product = Product(
         brand=data['brand'],
         flavor=data['flavor'],
-        barcode=data.get('barcode'),
         description=data.get('description'),
         image=image
     )
+    
     db.session.add(product)
+
+    if barcode := data.get('barcode'):
+        new_barcode = Barcode(code=barcode, product=product)
+        db.session.add(new_barcode)
+
     db.session.commit()
     return jsonify({"message": "Product added successfully!"}), 201
 
@@ -161,7 +172,7 @@ def add_barcode(product_id):
     new_barcode = Barcode(code=data['code'], product=product)
     db.session.add(new_barcode)
     db.session.commit()
-    return jsonify({"message": "Barcode added successfully!"}), 201
+    return jsonify({"id": new_barcode.id, "code": new_barcode.code}), 201
 
 
 @app.route('/barcodes/<int:barcode_id>', methods=['DELETE'])

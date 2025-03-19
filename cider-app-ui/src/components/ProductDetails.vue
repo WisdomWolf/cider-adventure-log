@@ -28,13 +28,13 @@
         multiple
         column
       >
-        <v-chip
+        <v-chip closable
                 v-for="(barcode, index) in product.barcodes"
                 :key="index"
                 close
                 @click:close="deleteBarcode(barcode)"
         >
-                {{ barcode }}
+                {{ barcode.code }}
         </v-chip>
       </v-chip-group>
 
@@ -138,10 +138,10 @@
       if (!this.newBarcode.trim()) return;
 
       try {
-        await axios.post(`/products/${this.product.id}/barcodes`, {
+        const response = await axios.post(`/products/${this.product.id}/barcodes`, {
           code: this.newBarcode,
         });
-        this.product.barcodes.push(this.newBarcode);
+        this.product.barcodes.push(response.data);
         this.newBarcode = '';
       } catch (error) {
         console.error('Error adding barcode:', error);

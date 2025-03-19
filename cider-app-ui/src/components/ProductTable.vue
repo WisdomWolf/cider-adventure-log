@@ -4,10 +4,6 @@
         <v-card-title>
           Product Table
           <v-spacer></v-spacer>
-          <!-- Add New Product Button -->
-          <v-btn color="primary" @click="showAddProductDialog = true">
-            Add New Product
-          </v-btn>
         </v-card-title>
         <v-card-text>
           <!-- Search Input -->
@@ -27,6 +23,18 @@
           class="elevation-1"
           dense
         >
+          <!-- Avg. Rating Column -->
+          <template v-slot:[`item.average_rating`]="{ item }">
+            <v-rating
+              v-if="item.average_rating"
+              v-model="item.average_rating"
+              readonly
+              dense
+              color="yellow"
+            ></v-rating>
+            <span v-else>No Ratings</span>
+          </template>
+  
           <template v-slot:[`item.actions`]="{ item }">
             <!-- View Button -->
             <v-btn icon color="primary" @click="selectProduct(item)">
@@ -80,6 +88,10 @@
         </v-card>
       </v-dialog>
     </v-container>
+    <!-- Add New Product Button -->
+    <v-btn color="primary" @click="showAddProductDialog = true">
+        Add New Product
+    </v-btn>
   </template>
   
   <script>
@@ -91,6 +103,7 @@
       products: {
         type: Array,
         required: true, // Products are passed from the parent component
+        // Each product should include an `average_rating` field
       },
       productBrands: {
         type: Array,
@@ -108,10 +121,10 @@
         showDeleteDialog: false, // Controls the visibility of the Delete Confirmation dialog
         productToDelete: null, // Stores the product to be deleted
         headers: [
-          { text: "Brand", value: "brand", sortable: true },
-          { text: "Flavor", value: "flavor", sortable: true },
-          { text: "Avg. Rating", value: "average_rating", sortable: true },
-          { text: "Actions", value: "actions", sortable: false },
+          { title: "Brand", value: "brand", sortable: true },
+          { title: "Flavor", value: "flavor", sortable: true },
+          { title: "Avg. Rating", value: "average_rating", sortable: true }, // Add Avg. Rating column
+          { title: "Actions", value: "actions", sortable: false },
         ],
       };
     },
@@ -154,4 +167,20 @@
     },
   };
   </script>
+
+<style>
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background-color: #f5f5f5;
+}
+
+
+.v-data-table-header th {
+  color: black !important; /* Ensure header text is visible */
+  font-weight: bold;       /* Make headers bold for clarity */
+}
+</style>
   
