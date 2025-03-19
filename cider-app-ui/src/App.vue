@@ -39,7 +39,6 @@ export default {
       headers: [
         { text: "Brand", value: "brand" },
         { text: "Flavor", value: "flavor" },
-        { text: "Barcode", value: "barcode" },
         { text: "Average Rating", value: "average_rating" },
       ],
       products: [],

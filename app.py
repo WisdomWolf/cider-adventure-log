@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.ext.hybrid import hybrid_property
 
 
 app = Flask(__name__)
@@ -19,16 +19,29 @@ class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     brand = db.Column(db.String(100), nullable=False)
     flavor = db.Column(db.String(100), nullable=False)
-    barcode = db.Column(db.String(100), nullable=True)
     description = db.Column(db.Text, nullable=True)
     image = db.Column(db.LargeBinary, nullable=True)
 
     ratings = db.relationship('Rating', backref='product', lazy=True)
+    barcodes = db.relationship(
+        'Barcode',
+        backref='product',
+        cascade="all, delete-orphan"
+    )
 
-    # Add a conditional unique constraint for barcode
-    # __table_args__ = (
-    #     UniqueConstraint('barcode', name='uq_product_barcode', sqlite_where=db.text("barcode IS NOT NULL")),
-    # )
+    @hybrid_property
+    def average_rating(self) -> float:
+        if self.ratings:
+            return sum(r.score for r in self.ratings) / len(self.ratings)
+        else:
+            return None
+
+
+class Barcode(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(100), nullable=False, unique=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+
 
 class Rating(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -55,11 +68,11 @@ def get_product_details(product_id):
         "id": product.id,
         "flavor": product.flavor,
         "brand": product.brand,
-        "barcode": product.barcode,
+        "barcodes": [barcode.code for barcode in product.barcodes],
         "description": product.description,
         "image": image_base64,
         "ratings": ratings,
-        "average_rating": sum(r.score for r in product.ratings) / len(product.ratings) if product.ratings else None
+        "average_rating": product.average_rating
     })
 
 
@@ -71,8 +84,8 @@ def get_products():
             "id": p.id,
             "brand": p.brand,
             "flavor": p.flavor,
-            "barcode": p.barcode,
-            "average_rating": sum(r.score for r in p.ratings) / len(p.ratings) if p.ratings else None
+            "barcodes": p.barcodes,
+            "average_rating": p.average_rating
         }
         for p in products
     ])
@@ -141,17 +154,22 @@ def delete_product(product_id):
     return jsonify({"message": "Product not found"}), 404
 
 
-@app.route('/products/<int:product_id>/average-rating', methods=['GET'])
-def get_average_rating(product_id):
-    product = Product.query.get(product_id)
-    if not product:
-        return jsonify({"message": "Product not found"}), 404
+@app.route('/products/<int:product_id>/barcodes', methods=['POST'])
+def add_barcode(product_id):
+    data = request.json
+    product = Product.query.get_or_404(product_id)
+    new_barcode = Barcode(code=data['code'], product=product)
+    db.session.add(new_barcode)
+    db.session.commit()
+    return jsonify({"message": "Barcode added successfully!"}), 201
 
-    if not product.ratings:
-        return jsonify({"average_rating": None}), 200
 
-    average_rating = sum(rating.score for rating in product.ratings) / len(product.ratings)
-    return jsonify({"average_rating": average_rating}), 200
+@app.route('/barcodes/<int:barcode_id>', methods=['DELETE'])
+def delete_barcode(barcode_id):
+    barcode = Barcode.query.get_or_404(barcode_id)
+    db.session.delete(barcode)
+    db.session.commit()
+    return jsonify({"message": "Barcode deleted successfully!"}), 200
 
 
 @app.route('/scan', methods=['POST'])

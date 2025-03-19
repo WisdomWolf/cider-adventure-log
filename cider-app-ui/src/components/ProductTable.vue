@@ -110,8 +110,7 @@
         headers: [
           { text: "Brand", value: "brand", sortable: true },
           { text: "Flavor", value: "flavor", sortable: true },
-          { text: "Barcode", value: "barcode", sortable: true },
-          { text: "Description", value: "description", sortable: false },
+          { text: "Avg. Rating", value: "average_rating", sortable: true },
           { text: "Actions", value: "actions", sortable: false },
         ],
       };

@@ -23,6 +23,27 @@
           ></v-rating>
         </v-card-text>
       </v-card>
+      <v-chip-group
+        v-model="selectedBarcodes"
+        multiple
+        column
+      >
+        <v-chip
+                v-for="(barcode, index) in product.barcodes"
+                :key="index"
+                close
+                @click:close="deleteBarcode(barcode)"
+        >
+                {{ barcode }}
+        </v-chip>
+      </v-chip-group>
+
+        <v-text-field
+        v-model="newBarcode"
+        label="Add Barcode"
+        @keyup.enter="addBarcode"
+        ></v-text-field>
+        <v-btn @click="addBarcode">Add</v-btn>
   
       <v-list>
         <v-subheader>Ratings</v-subheader>
@@ -95,6 +116,7 @@
           comment: "",
         },
         valid: false,
+        newBarcode: "",
       };
     },
     methods: {
@@ -112,6 +134,28 @@
           console.error("Error adding rating:", error);
         }
       },
+      async addBarcode() {
+      if (!this.newBarcode.trim()) return;
+
+      try {
+        await axios.post(`/products/${this.product.id}/barcodes`, {
+          code: this.newBarcode,
+        });
+        this.product.barcodes.push(this.newBarcode);
+        this.newBarcode = '';
+      } catch (error) {
+        console.error('Error adding barcode:', error);
+      }
+    },
+    async deleteBarcode(barcode) {
+      try {
+        const barcodeId = this.product.barcodes.find((b) => b === barcode).id;
+        await axios.delete(`/barcodes/${barcodeId}`);
+        this.product.barcodes = this.product.barcodes.filter((b) => b !== barcode);
+      } catch (error) {
+        console.error('Error deleting barcode:', error);
+      }
+    },
     },
   };
   </script>
