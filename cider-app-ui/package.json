@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@mdi/font": "5.9.55",
+    "axios": "^1.8.3",
     "core-js": "^3.8.3",
     "roboto-fontface": "*",
-    "vite": "^6.2.2",
     "vue": "^3.2.13",
     "vue-qrcode-reader": "^5.7.1",
     "vuetify": "^3.7.18",
@@ -27,9 +27,9 @@
     "@vue/cli-service": "^3.3.1",
     "eslint": "^7.32.0",
     "eslint-plugin-vue": "^8.0.3",
-    "vite": "^3.0.8",
-    "vite-plugin-vuetify": "^1.0.0-alpha.12",
-    "vue-cli-plugin-vuetify": "~2.5.8"
+    "vite": "^6.2.2",
+    "vite-plugin-vuetify": "^2.1.0",
+    "vue-cli-plugin-vuetify": "^2.5.8"
   },
   "eslintConfig": {
     "root": true,
