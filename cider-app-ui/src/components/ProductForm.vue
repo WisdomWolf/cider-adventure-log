@@ -1,33 +1,53 @@
 <template>
     <form @submit.prevent="submitProduct">
-      <v-combobox
-        v-model="newProduct.brand"
-        :items="productBrands"
-        label="Brand"
-        clearable
-        required
-      ></v-combobox>
+      <!-- Brand Combo Box -->
+    <v-combobox
+      v-model="newProduct.brand"
+      :items="productBrands"
+      label="Brand"
+      clearable
+      required
+    >
+      <template #clear>
+        <v-icon tabindex="-1" @click="clearField('brand')">mdi-close</v-icon>
+      </template>
+    </v-combobox>
 
-      <v-combobox
-        v-model="newProduct.flavor"
-        :items="productFlavors"
-        label="Flavor"
-        clearable
-        required
-      ></v-combobox>
-  
-      <v-text-field
-        v-model="newProduct.barcode"
-        label="Barcode (Optional)"
-        clearable
-      ></v-text-field>
-  
-      <v-textarea
-        v-model="newProduct.description"
-        label="Description"
-        rows="3"
-        clearable
-      ></v-textarea>
+    <!-- Flavor Combo Box -->
+    <v-combobox
+      v-model="newProduct.flavor"
+      :items="productFlavors"
+      label="Flavor"
+      clearable
+      required
+    >
+      <template #clear>
+        <v-icon tabindex="-1" @click="clearField('flavor')">mdi-close</v-icon>
+      </template>
+    </v-combobox>
+
+    <!-- Barcode Text Field -->
+    <v-text-field
+      v-model="newProduct.barcode"
+      label="Barcode (Optional)"
+      clearable
+    >
+      <template #clear>
+        <v-icon tabindex="-1" @click="clearField('barcode')">mdi-close</v-icon>
+      </template>
+    </v-text-field>
+
+    <!-- Description Textarea -->
+    <v-textarea
+      v-model="newProduct.description"
+      label="Description"
+      rows="3"
+      clearable
+    >
+      <template #clear>
+        <v-icon tabindex="-1" @click="clearField('description')">mdi-close</v-icon>
+      </template>
+    </v-textarea>
   
       <v-radio-group v-model="imageOption" label="Image Source" row>
         <v-radio label="Upload Image" value="upload"></v-radio>
@@ -76,6 +96,14 @@
         },
         imageOption: "upload", // Default to image upload
         uploadedImage: null, // Holds the uploaded image file
+        clearIcon: {
+            component: {
+                functional: true,
+                render(h) {
+                    return h("span", { attrs: { tabindex: "-1" } }); // Skip clear button in tab order
+                }
+            }
+        }
       };
     },
     mounted() {
