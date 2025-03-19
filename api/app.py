@@ -1,11 +1,15 @@
 import base64
+from datetime import datetime
+from typing import Optional
 
 from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 app = Flask(__name__)
@@ -17,16 +21,20 @@ CORS(app)
 
 # Models
 class Product(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    brand = db.Column(db.String(100), nullable=False)
-    flavor = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    image = db.Column(db.LargeBinary, nullable=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    brand: Mapped[str]
+    flavor: Mapped[str]
+    description: Mapped[Optional[str]]
+    image = mapped_column(db.LargeBinary, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        insert_default=func.now(),
+        default=None,
+        nullable=True
+    )
 
-    ratings = db.relationship('Rating', backref='product', lazy=True)
-    barcodes = db.relationship(
-        'Barcode',
-        backref='product',
+    ratings: Mapped[list["Rating"]] = db.relationship(back_populates='product')
+    barcodes: Mapped[list["Barcode"]] = db.relationship(
+        back_populates='product',
         cascade="all, delete-orphan"
     )
 
@@ -39,16 +47,39 @@ class Product(db.Model):
 
 
 class Barcode(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    code = db.Column(db.String(100), nullable=False, unique=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    product_id: Mapped[int] = mapped_column(
+        db.ForeignKey('product.id'),
+        nullable=False
+    )
+    code: Mapped[str] = mapped_column(nullable=False, unique=True)
+    created_at: Mapped[datetime] = mapped_column(
+        insert_default=func.now(),
+        default=None,
+        nullable=True
+    )
+
+    product: Mapped["Product"] = db.relationship(back_populates="barcodes")
 
 
 class Rating(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    score = db.Column(db.Integer, nullable=False)
-    comment = db.Column(db.Text, nullable=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    product_id: Mapped[int] = mapped_column(
+        db.ForeignKey('product.id'),
+        nullable=False
+    )
+    score: Mapped[int]
+    comment: Mapped[Optional[str]]
+    purchase_location: Mapped[Optional[str]]
+    consumption_location: Mapped[Optional[str]]
+    consumption_method: Mapped[Optional[str]]
+    created_at: Mapped[datetime] = mapped_column(
+        insert_default=func.now(),
+        default=None,
+        nullable=True
+    )
+
+    product: Mapped["Product"] = db.relationship(back_populates="ratings")
 
 
 # Routes
@@ -63,7 +94,10 @@ def get_product_details(product_id):
     if product.image:
         image_base64 = base64.b64encode(product.image).decode('utf-8')
 
-    ratings = [{"id": r.id, "score": r.score, "comment": r.comment} for r in product.ratings]
+    ratings = [
+        {"id": r.id, "score": r.score, "comment": r.comment}
+        for r in product.ratings
+    ]
 
     return jsonify({
         "id": product.id,
