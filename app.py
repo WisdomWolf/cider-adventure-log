@@ -1,3 +1,5 @@
+import base64
+
 from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -19,7 +21,7 @@ class Product(db.Model):
     type = db.Column(db.String(100), nullable=False)
     barcode = db.Column(db.String(100), nullable=True)
     description = db.Column(db.Text, nullable=True)
-    image_url = db.Column(db.String(255), nullable=True)
+    image = db.Column(db.LargeBinary, nullable=True)
 
     ratings = db.relationship('Rating', backref='product', lazy=True)
 
@@ -38,8 +40,14 @@ class Rating(db.Model):
 # Routes
 @app.route('/products/<int:product_id>', methods=['GET'])
 def get_product_details(product_id):
-    product = Product.query.get_or_404(product_id)
-    ratings = Rating.query.filter_by(product_id=product_id).all()
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({"message": "Product not found"}), 404
+
+    # Convert the binary image data to a Base64 string (if it exists)
+    image_base64 = None
+    if product.image:
+        image_base64 = base64.b64encode(product.image).decode('utf-8')
 
     return jsonify({
         "id": product.id,
@@ -48,9 +56,7 @@ def get_product_details(product_id):
         "type": product.type,
         "barcode": product.barcode,
         "description": product.description,
-        "image_url": product.image_url,
-        "average_rating": sum(r.score for r in ratings) / len(ratings) if ratings else None,
-        "ratings": [{"score": r.score, "comment": r.comment} for r in ratings]
+        "image": image_base64,  # Include the Base64-encoded image
     })
 
 
@@ -72,18 +78,32 @@ def get_products():
 
 @app.route('/products', methods=['POST'])
 def add_product():
-    data = request.json
+    data = request.form  # Use form data for handling file uploads
+    image = None
 
-    # Validate required fields
-    if not all(key in data for key in ['name', 'brand', 'type', 'barcode']):
-        return jsonify({"message": "Missing required fields"}), 400
+    # Handle image upload
+    if 'image' in request.files:
+        image_file = request.files['image']
+        if image_file:
+            image = image_file.read()  # Read the binary data of the uploaded image
 
-    # Create and save the product
+    # Handle image URL
+    if 'image_url' in data and data['image_url']:
+        try:
+            import requests
+            response = requests.get(data['image_url'])
+            if response.status_code == 200:
+                image = response.content  # Download and store the image as binary data
+        except Exception as e:
+            return jsonify({"message": "Failed to fetch image from URL", "error": str(e)}), 400
+
     product = Product(
         name=data['name'],
         brand=data['brand'],
         type=data['type'],
-        barcode=data['barcode']
+        barcode=data.get('barcode'),
+        description=data.get('description'),
+        image=image
     )
     db.session.add(product)
     db.session.commit()

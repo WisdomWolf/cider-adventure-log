@@ -2,7 +2,17 @@
     <v-container>
       <v-btn @click="$emit('go-back')" color="primary">Back</v-btn>
       <v-card>
-        <v-img :src="product.image_url" height="200px"></v-img>
+        <!-- Updated logic to load the image -->
+        <v-img
+          v-if="product.image"
+          :src="'data:image/jpeg;base64,' + product.image"
+          height="200px"
+        ></v-img>
+        <v-img
+          v-else
+          src="https://via.placeholder.com/200" <!-- Placeholder if no image -->
+          height="200px"
+        ></v-img>
         <v-card-title>{{ product.name }}</v-card-title>
         <v-card-subtitle>{{ product.brand }} - {{ product.type }}</v-card-subtitle>
         <v-card-text>

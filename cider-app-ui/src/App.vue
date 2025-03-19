@@ -2,12 +2,23 @@
   <v-app>
     <v-container>
       <h1 class="text-center">Cider Adventure Log</h1>
-      <ProductTable
-        v-if="!selectedProduct"
-        :headers="headers"
-        :products="products"
-        @view-product="fetchProductDetails"
-      />
+      <div v-if="!selectedProduct">
+        <!-- Product Table -->
+        <ProductTable
+          :headers="headers"
+          :products="products"
+          @view-product="fetchProductDetails"
+        />
+
+        <!-- Add Product Form -->
+        <ProductForm
+          :productNames="productNames"
+          :productBrands="productBrands"
+          :productTypes="productTypes"
+          @add-product="addProduct"
+        />
+      </div>
+      <!-- Product Details -->
       <ProductDetails
         v-else
         :product="selectedProduct"
@@ -20,12 +31,14 @@
 <script>
 import ProductTable from "./components/ProductTable.vue";
 import ProductDetails from "./components/ProductDetails.vue";
+import ProductForm from "./components/ProductForm.vue";
 import axios from "axios";
 
 export default {
   components: {
     ProductTable,
     ProductDetails,
+    ProductForm,
   },
   data() {
     return {
@@ -37,14 +50,25 @@ export default {
         { text: "Average Rating", value: "average_rating" },
       ],
       products: [],
+      productNames: [],
+      productBrands: [],
+      productTypes: [],
       selectedProduct: null,
     };
   },
   methods: {
     async fetchProducts() {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/products`);
-        this.products = response.data;
+        const response = await axios.get(`/products`);
+        const productsData = response.data;
+
+        // Populate dropdown options with unique values
+        this.productNames = [...new Set(productsData.map((p) => p.name))];
+        this.productBrands = [...new Set(productsData.map((p) => p.brand))];
+        this.productTypes = [...new Set(productsData.map((p) => p.type))];
+
+        // Update the products array
+        this.products = productsData;
       } catch (error) {
         console.error("Error fetching products:", error);
       }
@@ -56,10 +80,22 @@ export default {
       }
 
       try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/products/${productId}`);
+        const response = await axios.get(`/products/${productId}`);
         this.selectedProduct = response.data;
       } catch (error) {
         console.error("Error fetching product details:", error);
+      }
+    },
+    async addProduct(formData) {
+      try {
+        await axios.post(`/products`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        this.fetchProducts(); // Refresh the product list after adding a new product
+      } catch (error) {
+        console.error("Error adding product:", error);
       }
     },
   },
