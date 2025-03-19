@@ -96,6 +96,10 @@
         </v-card>
       </v-dialog>
     </v-container>
+
+    <v-snackbar v-model="errorSnackbar" :timeout="3000" color="red" top>
+      {{ errorMessage }}
+    </v-snackbar>
   </template>
   
   <script>
@@ -117,6 +121,8 @@
         },
         valid: false,
         newBarcode: "",
+        errorSnackbar: false,
+        errorMessage: "",
       };
     },
     methods: {
@@ -145,8 +151,8 @@
           this.newBarcode = '';
         } catch (error) {
           if (error.response && error.response.data.error) {
-            // Display the error message from the backend
-            alert(error.response.data.error);
+            this.errorMessage = error.response.data.error;
+            this.errorSnackbar = true;
           } else {
             console.error('An unexpected error occurred:', error);
           }

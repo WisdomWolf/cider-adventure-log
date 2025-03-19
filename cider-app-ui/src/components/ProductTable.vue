@@ -10,9 +10,11 @@
           <v-text-field
             v-model="search"
             label="Search"
+            prepend-inner-icon="mdi-magnify"
             placeholder="Type to filter..."
+            single-line
             clearable
-            outlined
+            variant="outlined"
           ></v-text-field>
         </v-card-text>
         <!-- Product Table -->
@@ -23,28 +25,29 @@
           class="elevation-1"
           dense
         >
-          <!-- Avg. Rating Column -->
-          <template v-slot:[`item.average_rating`]="{ item }">
-            <v-rating
-              v-if="item.average_rating"
-              v-model="item.average_rating"
-              readonly
-              dense
-              color="yellow"
-            ></v-rating>
-            <span v-else>No Ratings</span>
-          </template>
-  
-          <template v-slot:[`item.actions`]="{ item }">
-            <!-- View Button -->
-            <v-btn icon color="primary" @click="selectProduct(item)">
-              <v-icon>mdi-eye</v-icon>
-            </v-btn>
-            <!-- Delete Button -->
-            <v-btn icon color="red" @click="confirmDelete(item)">
-              <v-icon>mdi-trash-can</v-icon>
-            </v-btn>
-          </template>
+            <template v-slot:item="{ item }">
+                <tr class="clickable-row" @click="selectProduct(item)">
+                    <td>{{ item.brand }}</td>
+                    <td>{{ item.flavor }}</td>
+                    <td>
+                        <v-rating
+                        v-if="item.average_rating"
+                        v-model="item.average_rating"
+                        half-increments
+                        :size="20"
+                        readonly
+                        dense
+                        color="yellow"
+                        ></v-rating>
+                        <span v-else>No Ratings</span>
+                    </td>
+                    <td>
+                        <v-btn icon size="x-small" color="red" @click.stop="confirmDelete(item)">
+                            <v-icon>mdi-trash-can</v-icon>
+                        </v-btn>
+                    </td>
+                </tr>
+            </template>
         </v-data-table>
       </v-card>
   
@@ -124,7 +127,7 @@
           { title: "Brand", value: "brand", sortable: true },
           { title: "Flavor", value: "flavor", sortable: true },
           { title: "Avg. Rating", value: "average_rating", sortable: true }, // Add Avg. Rating column
-          { title: "Actions", value: "actions", sortable: false },
+          { title: "", value: "actions", sortable: false },
         ],
       };
     },
