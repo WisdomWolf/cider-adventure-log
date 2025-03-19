@@ -12,7 +12,9 @@ CORS(app)
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    barcode = db.Column(db.String(100), unique=True, nullable=False)
+    brand = db.Column(db.Text, nullable=False)
+    type = db.Column(db.Text, nullable=True)
+    barcode = db.Column(db.Text, nullable=True)
     ratings = db.relationship('Rating', backref='product', lazy=True)
 
 class Rating(db.Model):
@@ -35,6 +37,8 @@ def get_products():
         result.append({
             "id": product.id,
             "name": product.name,
+            "brand": product.brand,
+            "type": product.type,
             "barcode": product.barcode,
             "average_rating": average_rating,
             "ratings": [{"user": r.user, "score": r.score, "comment": r.comment} for r in product.ratings]
@@ -44,14 +48,22 @@ def get_products():
 @app.route('/products', methods=['POST'])
 def add_product():
     data = request.json
-    existing_product = Product.query.filter_by(barcode=data['barcode']).first()
-    if existing_product:
-        return jsonify({"message": "Product with this barcode already exists."}), 400
 
-    product = Product(name=data['name'], barcode=data['barcode'])
+    # Validate required fields
+    if not all(key in data for key in ['name', 'brand', 'type', 'barcode']):
+        return jsonify({"message": "Missing required fields"}), 400
+
+    # Create and save the product
+    product = Product(
+        name=data['name'],
+        brand=data['brand'],
+        type=data['type'],
+        barcode=data['barcode']
+    )
     db.session.add(product)
     db.session.commit()
     return jsonify({"message": "Product added successfully!"}), 201
+
 
 @app.route('/products/<int:product_id>/ratings', methods=['POST'])
 def add_rating(product_id):

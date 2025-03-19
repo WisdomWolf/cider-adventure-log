@@ -15,13 +15,8 @@
             <v-btn color="primary" @click="refreshProducts">Refresh</v-btn>
           </v-toolbar>
         </template>
-        <template v-slot:[`item.average_rating`]="{ item }">
-          <v-rating
-            v-model="item.average_rating"
-            readonly
-            dense
-            color="amber"
-          ></v-rating>
+        <template v-slot:item.average_rating="{ item }">
+            {{ item.average_rating || "N/A" }}
         </template>
       </v-data-table>
     </v-card>
@@ -30,8 +25,14 @@
   <script>
   export default {
     props: {
-      headers: Array,
-      products: Array,
+        headers: {
+            type: Array,
+            required: true,
+        },
+        products: {
+            type: Array,
+            required: true,
+        },
     },
     methods: {
       refreshProducts() {

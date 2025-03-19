@@ -59,15 +59,22 @@ export default {
     const ratingDialog = ref(false);
 
     const fetchProducts = async () => {
-      const response = await axios.get("/products");
-      products.value = response.data.map(async (product) => {
-        const avgRatingResponse = await axios.get(`/products/${product.id}/average-rating`);
-        return { ...product, average_rating: avgRatingResponse.data.average_rating };
-      });
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/products`);
+        const productsData = response.data;
 
-      productNames.value = [...new Set(response.data.map((p) => p.name))];
-      productBrands.value = [...new Set(response.data.map((p) => p.brand))];
-      productTypes.value = [...new Set(response.data.map((p) => p.type))];
+        // Populate dropdown options with unique values
+        productNames.value = [...new Set(productsData.map((p) => p.name))];
+        productBrands.value = [...new Set(productsData.map((p) => p.brand))];
+        productTypes.value = [...new Set(productsData.map((p) => p.type))];
+
+        // Update the products array
+        products.value = productsData;
+
+        console.log("Fetched Products:", products.value); // Debugging
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
     };
 
     const addProduct = async () => {

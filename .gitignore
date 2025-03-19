@@ -318,3 +318,6 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
+.history/app_20250312154617.py .history/app_20250312154621.py .history/app_20250312155412.py .history/app_20250312155944.py .history/app_20250312180605.py .history/app_20250312184236.py .history/app_20250312184259.py .history/app_20250318142514.py .history/app_20250318212354.py .history/app_20250318212425.py .history/cider-app-ui .history/pyproject_20250312154549.toml .history/pyproject_20250312180527.toml
+.history
+.python-version

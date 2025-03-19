@@ -1,59 +1,62 @@
 <template>
-    <v-card class="mb-4" outlined>
-      <v-card-title>Manage Products</v-card-title>
-      <v-card-text>
-        <v-row>
-          <v-col cols="12" md="3">
-            <v-autocomplete
-              v-model="newProduct.name"
-              :items="productNames"
-              label="Product Name"
-              placeholder="Type to search"
-              clearable
-            ></v-autocomplete>
-          </v-col>
-          <v-col cols="12" md="3">
-            <v-autocomplete
-              v-model="newProduct.brand"
-              :items="productBrands"
-              label="Brand"
-              placeholder="Type to search"
-              clearable
-            ></v-autocomplete>
-          </v-col>
-          <v-col cols="12" md="3">
-            <v-autocomplete
-              v-model="newProduct.type"
-              :items="productTypes"
-              label="Type"
-              placeholder="Type to search"
-              clearable
-            ></v-autocomplete>
-          </v-col>
-          <v-col cols="12" md="3">
-            <v-text-field
-              v-model="newProduct.barcode"
-              label="Barcode"
-              placeholder="Scan or Enter Barcode"
-              clearable
-            ></v-text-field>
-          </v-col>
-        </v-row>
-        <v-btn color="primary" @click="addProduct">Add Product</v-btn>
-      </v-card-text>
-    </v-card>
+    <v-form @submit.prevent="submitProduct">
+      <v-combobox
+        v-model="newProduct.name"
+        :items="productNames"
+        label="Product Name"
+        clearable
+        required
+      ></v-combobox>
+  
+      <v-combobox
+        v-model="newProduct.brand"
+        :items="productBrands"
+        label="Brand"
+        clearable
+        required
+      ></v-combobox>
+  
+      <v-combobox
+        v-model="newProduct.type"
+        :items="productTypes"
+        label="Type"
+        clearable
+        required
+      ></v-combobox>
+  
+      <v-text-field
+        v-model="newProduct.barcode"
+        label="Barcode"
+        clearable
+        required
+      ></v-text-field>
+  
+      <v-btn type="submit" color="primary">Add Product</v-btn>
+    </v-form>
   </template>
   
   <script>
   export default {
     props: {
-      productNames: Array,
-      productBrands: Array,
-      productTypes: Array,
-      newProduct: Object,
+      productNames: {
+        type: Array,
+        required: true,
+      },
+      productBrands: {
+        type: Array,
+        required: true,
+      },
+      productTypes: {
+        type: Array,
+        required: true,
+      },
+      newProduct: {
+        type: Object,
+        required: true,
+      },
     },
     methods: {
-      addProduct() {
+      submitProduct() {
         this.$emit("add-product");
       },
     },
