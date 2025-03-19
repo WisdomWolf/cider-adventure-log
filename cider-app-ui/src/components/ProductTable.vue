@@ -1,44 +1,58 @@
 <template>
-    <v-card outlined>
-      <v-card-title>Product List</v-card-title>
-      <v-data-table
-        :headers="headers"
-        :items="products"
-        item-value="id"
-        class="elevation-1"
-        dense
-      >
-        <template v-slot:top>
-          <v-toolbar flat>
-            <v-toolbar-title>Products</v-toolbar-title>
-            <v-spacer></v-spacer>
-            <v-btn color="primary" @click="refreshProducts">Refresh</v-btn>
-          </v-toolbar>
-        </template>
-        <template v-slot:item.average_rating="{ item }">
-            {{ item.average_rating || "N/A" }}
-        </template>
-      </v-data-table>
-    </v-card>
+    <v-data-table
+      :headers="headers"
+      :items="products"
+      class="elevation-1"
+    >
+      <template v-slot:item="{ item }">
+        <tr class="clickable-row" @click="viewProductDetails(item)">
+          <td>{{ item.name }}</td>
+          <td>{{ item.brand }}</td>
+          <td>{{ item.type }}</td>
+          <td>{{ item.barcode }}</td>
+          <td>
+            <v-rating
+              v-model="item.average_rating"
+              readonly
+              color="amber"
+              background-color="grey lighten-1"
+            ></v-rating>
+          </td>
+        </tr>
+      </template>
+    </v-data-table>
   </template>
   
   <script>
   export default {
     props: {
-        headers: {
-            type: Array,
-            required: true,
-        },
-        products: {
-            type: Array,
-            required: true,
-        },
+      headers: {
+        type: Array,
+        required: true,
+      },
+      products: {
+        type: Array,
+        required: true,
+      },
     },
     methods: {
-      refreshProducts() {
-        this.$emit("refresh-products");
+      viewProductDetails(item) {
+        if (item && item.id) {
+          this.$emit("view-product", item.id); // Emit the correct product ID
+        } else {
+          console.error("Invalid product item:", item); // Log the error for debugging
+        }
       },
     },
   };
   </script>
+  
+  <style>
+  .clickable-row {
+    cursor: pointer;
+  }
+  .clickable-row:hover {
+    background-color: #f5f5f5;
+  }
+  </style>
   

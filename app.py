@@ -1,49 +1,74 @@
 from flask import Flask, request, jsonify
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from sqlalchemy.schema import UniqueConstraint
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///products.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 CORS(app)
 
 # Models
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    brand = db.Column(db.Text, nullable=False)
-    type = db.Column(db.Text, nullable=True)
-    barcode = db.Column(db.Text, nullable=True)
+    brand = db.Column(db.String(100), nullable=False)
+    type = db.Column(db.String(100), nullable=False)
+    barcode = db.Column(db.String(100), nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    image_url = db.Column(db.String(255), nullable=True)
+
     ratings = db.relationship('Rating', backref='product', lazy=True)
+
+    # Add a conditional unique constraint for barcode
+    # __table_args__ = (
+    #     UniqueConstraint('barcode', name='uq_product_barcode', sqlite_where=db.text("barcode IS NOT NULL")),
+    # )
 
 class Rating(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user = db.Column(db.String(100), nullable=False)
-    score = db.Column(db.Float, nullable=False)
-    comment = db.Column(db.String(255), nullable=True)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    score = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.Text, nullable=True)
+
 
 # Routes
+@app.route('/products/<int:product_id>', methods=['GET'])
+def get_product_details(product_id):
+    product = Product.query.get_or_404(product_id)
+    ratings = Rating.query.filter_by(product_id=product_id).all()
+
+    return jsonify({
+        "id": product.id,
+        "name": product.name,
+        "brand": product.brand,
+        "type": product.type,
+        "barcode": product.barcode,
+        "description": product.description,
+        "image_url": product.image_url,
+        "average_rating": sum(r.score for r in ratings) / len(ratings) if ratings else None,
+        "ratings": [{"score": r.score, "comment": r.comment} for r in ratings]
+    })
+
+
 @app.route('/products', methods=['GET'])
 def get_products():
     products = Product.query.all()
-    result = []
-    for product in products:
-        average_rating = (
-            sum(rating.score for rating in product.ratings) / len(product.ratings)
-            if product.ratings else None
-        )
-        result.append({
-            "id": product.id,
-            "name": product.name,
-            "brand": product.brand,
-            "type": product.type,
-            "barcode": product.barcode,
-            "average_rating": average_rating,
-            "ratings": [{"user": r.user, "score": r.score, "comment": r.comment} for r in product.ratings]
-        })
-    return jsonify(result)
+    return jsonify([
+        {
+            "id": p.id,
+            "name": p.name,
+            "brand": p.brand,
+            "type": p.type,
+            "barcode": p.barcode,
+            "average_rating": sum(r.score for r in p.ratings) / len(p.ratings) if p.ratings else None
+        }
+        for p in products
+    ])
+
 
 @app.route('/products', methods=['POST'])
 def add_product():
