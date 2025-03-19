@@ -135,7 +135,11 @@
       },
       selectProduct(product) {
         // Emit the selected product to the parent component
-        this.$emit("view-product", product);
+        if (product && product.id) {
+          this.$emit("view-product", product.id); // Emit the correct product ID
+        } else {
+          console.error("Invalid product item:", product); // Log the error for debugging
+        }
       },
       confirmDelete(product) {
         // Open the confirmation dialog and store the product to delete
