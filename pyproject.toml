@@ -1,0 +1,26 @@
+[project]
+name = "cider-app"
+version = "0.1.0"
+description = "Interactive log for cider exploration tracking"
+authors = [
+    {name = "WisdomWolf",email = "wisdomwolf@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13,<4.0"
+dependencies = [
+    "flask (>=3.1.0,<4.0.0)",
+    "flask-sqlalchemy (>=3.1.1,<4.0.0)",
+    "pyzbar (>=0.1.9,<0.2.0)",
+    "pillow (>=11.1.0,<12.0.0)",
+    "flask-cors (>=5.0.1,<6.0.0)"
+]
+
+[tool.poetry]
+
+[tool.poetry.group.dev.dependencies]
+ipython = "^9.0.2"
+requests = "^2.32.3"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
