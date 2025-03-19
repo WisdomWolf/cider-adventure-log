@@ -6,6 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from sqlalchemy.schema import UniqueConstraint
 
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///products.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -16,9 +17,8 @@ CORS(app)
 # Models
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
+    flavor = db.Column(db.String(100), nullable=False)
     brand = db.Column(db.String(100), nullable=False)
-    type = db.Column(db.String(100), nullable=False)
     barcode = db.Column(db.String(100), nullable=True)
     description = db.Column(db.Text, nullable=True)
     image = db.Column(db.LargeBinary, nullable=True)
@@ -49,6 +49,8 @@ def get_product_details(product_id):
     if product.image:
         image_base64 = base64.b64encode(product.image).decode('utf-8')
 
+    ratings = [{"id": r.id, "score": r.score, "comment": r.comment} for r in product.ratings]
+
     return jsonify({
         "id": product.id,
         "name": product.name,
@@ -56,7 +58,9 @@ def get_product_details(product_id):
         "type": product.type,
         "barcode": product.barcode,
         "description": product.description,
-        "image": image_base64,  # Include the Base64-encoded image
+        "image": image_base64,
+        "ratings": ratings,
+        "average_rating": sum(r.score for r in product.ratings) / len(product.ratings) if product.ratings else None
     })
 
 
@@ -112,15 +116,23 @@ def add_product():
 
 @app.route('/products/<int:product_id>/ratings', methods=['POST'])
 def add_rating(product_id):
-    data = request.json
     product = Product.query.get(product_id)
     if not product:
         return jsonify({"message": "Product not found"}), 404
 
-    rating = Rating(user=data['user'], score=data['score'], comment=data.get('comment'), product_id=product_id)
+    data = request.json
+    score = data.get('score')
+    comment = data.get('comment', '')
+
+    if not score or not (1 <= score <= 5):
+        return jsonify({"message": "Invalid rating score. Must be between 1 and 5."}), 400
+
+    rating = Rating(score=score, comment=comment, product_id=product_id)
     db.session.add(rating)
     db.session.commit()
+
     return jsonify({"message": "Rating added successfully!"}), 201
+
 
 @app.route('/products/<int:product_id>/average-rating', methods=['GET'])
 def get_average_rating(product_id):
@@ -133,6 +145,7 @@ def get_average_rating(product_id):
 
     average_rating = sum(rating.score for rating in product.ratings) / len(product.ratings)
     return jsonify({"average_rating": average_rating}), 200
+
 
 @app.route('/products/<int:product_id>', methods=['GET'])
 def get_product(product_id):
@@ -152,6 +165,7 @@ def get_product(product_id):
         "ratings": [{"user": r.user, "score": r.score, "comment": r.comment} for r in product.ratings]
     })
 
+
 @app.route('/scan', methods=['POST'])
 def scan_barcode():
     from pyzbar.pyzbar import decode
@@ -164,6 +178,7 @@ def scan_barcode():
     if decoded_objects:
         return jsonify({"barcode": decoded_objects[0].data.decode('utf-8')})
     return jsonify({"message": "No barcode detected"}), 400
+
 
 # Initialize the database
 if __name__ == '__main__':
