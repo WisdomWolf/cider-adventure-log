@@ -135,17 +135,22 @@
         }
       },
       async addBarcode() {
-      if (!this.newBarcode.trim()) return;
+        if (!this.newBarcode.trim()) return;
 
-      try {
-        const response = await axios.post(`/products/${this.product.id}/barcodes`, {
-          code: this.newBarcode,
-        });
-        this.product.barcodes.push(response.data);
-        this.newBarcode = '';
-      } catch (error) {
-        console.error('Error adding barcode:', error);
-      }
+        try {
+          const response = await axios.post(`/products/${this.product.id}/barcodes`, {
+            code: this.newBarcode,
+          });
+          this.product.barcodes.push(response.data);
+          this.newBarcode = '';
+        } catch (error) {
+          if (error.response && error.response.data.error) {
+            // Display the error message from the backend
+            alert(error.response.data.error);
+          } else {
+            console.error('An unexpected error occurred:', error);
+          }
+        }
     },
     async deleteBarcode(barcode) {
       try {

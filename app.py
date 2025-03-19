@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.hybrid import hybrid_property
 
 
@@ -99,14 +100,14 @@ def get_products():
 
 @app.route('/products', methods=['POST'])
 def add_product():
-    data = request.form  # Use form data for handling file uploads
+    data = request.form
     image = None
 
     # Handle image upload
     if 'image' in request.files:
         image_file = request.files['image']
         if image_file:
-            image = image_file.read()  # Read the binary data of the uploaded image
+            image = image_file.read()
 
     # Handle image URL
     if 'image_url' in data and data['image_url']:
@@ -170,9 +171,13 @@ def add_barcode(product_id):
     data = request.json
     product = Product.query.get_or_404(product_id)
     new_barcode = Barcode(code=data['code'], product=product)
-    db.session.add(new_barcode)
-    db.session.commit()
-    return jsonify({"id": new_barcode.id, "code": new_barcode.code}), 201
+    try:
+        db.session.add(new_barcode)
+        db.session.commit()
+        return jsonify({"id": new_barcode.id, "code": new_barcode.code}), 201
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "This barcode already exists."}), 400
 
 
 @app.route('/barcodes/<int:barcode_id>', methods=['DELETE'])
