@@ -12,8 +12,7 @@
           src="https://via.placeholder.com/200"
           height="200px"
         ></v-img>
-        <v-card-title>{{ product.name }}</v-card-title>
-        <v-card-subtitle>{{ product.brand }} - {{ product.type }}</v-card-subtitle>
+        <v-card-title>{{ product.brand }} - {{ product.flavor }}</v-card-title>
         <v-card-text>
           <p>{{ product.description }}</p>
           <v-rating
@@ -80,7 +79,7 @@
   
   <script>
   import axios from "@/axios"; // Use your configured Axios instance
-  
+
   export default {
     props: {
       product: {

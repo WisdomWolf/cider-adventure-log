@@ -12,9 +12,8 @@
 
         <!-- Add Product Form -->
         <ProductForm
-          :productNames="productNames"
           :productBrands="productBrands"
-          :productTypes="productTypes"
+          :productFlavors="productFlavors"
           @add-product="addProduct"
         />
       </div>
@@ -43,16 +42,14 @@ export default {
   data() {
     return {
       headers: [
-        { text: "Name", value: "name" },
         { text: "Brand", value: "brand" },
-        { text: "Type", value: "type" },
+        { text: "Flavor", value: "flavor" },
         { text: "Barcode", value: "barcode" },
         { text: "Average Rating", value: "average_rating" },
       ],
       products: [],
-      productNames: [],
       productBrands: [],
-      productTypes: [],
+      productFlavors: [],
       selectedProduct: null,
     };
   },
@@ -63,9 +60,8 @@ export default {
         const productsData = response.data;
 
         // Populate dropdown options with unique values
-        this.productNames = [...new Set(productsData.map((p) => p.name))];
         this.productBrands = [...new Set(productsData.map((p) => p.brand))];
-        this.productTypes = [...new Set(productsData.map((p) => p.type))];
+        this.productFlavors = [...new Set(productsData.map((p) => p.flavor))];
 
         // Update the products array
         this.products = productsData;

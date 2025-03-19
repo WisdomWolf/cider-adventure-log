@@ -6,9 +6,8 @@
     >
       <template v-slot:item="{ item }">
         <tr class="clickable-row" @click="viewProductDetails(item)">
-          <td>{{ item.name }}</td>
           <td>{{ item.brand }}</td>
-          <td>{{ item.type }}</td>
+          <td>{{ item.flavor }}</td>
           <td>{{ item.barcode }}</td>
           <td>
             <v-rating

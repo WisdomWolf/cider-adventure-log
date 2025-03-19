@@ -1,25 +1,17 @@
 <template>
     <form @submit.prevent="submitProduct">
       <v-combobox
-        v-model="newProduct.name"
-        :items="productNames"
-        label="Product Name"
-        clearable
-        required
-      ></v-combobox>
-  
-      <v-combobox
         v-model="newProduct.brand"
         :items="productBrands"
         label="Brand"
         clearable
         required
       ></v-combobox>
-  
+
       <v-combobox
-        v-model="newProduct.type"
-        :items="productTypes"
-        label="Type"
+        v-model="newProduct.flavor"
+        :items="productFlavors"
+        label="Flavor"
         clearable
         required
       ></v-combobox>
@@ -64,7 +56,7 @@
   <script>
   export default {
     props: {
-      productNames: {
+      productFlavors: {
         type: Array,
         required: true,
       },
@@ -72,17 +64,12 @@
         type: Array,
         required: true,
       },
-      productTypes: {
-        type: Array,
-        required: true,
-      },
     },
     data() {
       return {
         newProduct: {
-          name: "",
           brand: "",
-          type: "",
+          flavor: "",
           barcode: "",
           description: "",
           image_url: "",
@@ -96,9 +83,8 @@
         const formData = new FormData();
   
         // Add product details to the form data
-        formData.append("name", this.newProduct.name);
         formData.append("brand", this.newProduct.brand);
-        formData.append("type", this.newProduct.type);
+        formData.append("flavor", this.newProduct.flavor);
         formData.append("barcode", this.newProduct.barcode || "");
         formData.append("description", this.newProduct.description || "");
   
@@ -114,8 +100,8 @@
   
         // Reset the form after submission
         this.newProduct = {
-          name: "",
           brand: "",
+          flavor: "",
           type: "",
           barcode: "",
           description: "",

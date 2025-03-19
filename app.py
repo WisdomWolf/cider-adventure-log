@@ -53,9 +53,8 @@ def get_product_details(product_id):
 
     return jsonify({
         "id": product.id,
-        "name": product.name,
+        "flavor": product.flavor,
         "brand": product.brand,
-        "type": product.type,
         "barcode": product.barcode,
         "description": product.description,
         "image": image_base64,
@@ -70,9 +69,8 @@ def get_products():
     return jsonify([
         {
             "id": p.id,
-            "name": p.name,
             "brand": p.brand,
-            "type": p.type,
+            "flavor": p.flavor,
             "barcode": p.barcode,
             "average_rating": sum(r.score for r in p.ratings) / len(p.ratings) if p.ratings else None
         }
@@ -102,9 +100,8 @@ def add_product():
             return jsonify({"message": "Failed to fetch image from URL", "error": str(e)}), 400
 
     product = Product(
-        name=data['name'],
         brand=data['brand'],
-        type=data['type'],
+        flavor=data['flavor'],
         barcode=data.get('barcode'),
         description=data.get('description'),
         image=image
@@ -145,25 +142,6 @@ def get_average_rating(product_id):
 
     average_rating = sum(rating.score for rating in product.ratings) / len(product.ratings)
     return jsonify({"average_rating": average_rating}), 200
-
-
-@app.route('/products/<int:product_id>', methods=['GET'])
-def get_product(product_id):
-    product = Product.query.get(product_id)
-    if not product:
-        return jsonify({"message": "Product not found"}), 404
-
-    average_rating = (
-        sum(rating.score for rating in product.ratings) / len(product.ratings)
-        if product.ratings else None
-    )
-    return jsonify({
-        "id": product.id,
-        "name": product.name,
-        "barcode": product.barcode,
-        "average_rating": average_rating,
-        "ratings": [{"user": r.user, "score": r.score, "comment": r.comment} for r in product.ratings]
-    })
 
 
 @app.route('/scan', methods=['POST'])
