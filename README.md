@@ -1,0 +1,1 @@
+This is a rough WIP mostly generated using ChatGPT.  The overall idea is to have a responsive web application that can be used for searching and logging cider experiences.

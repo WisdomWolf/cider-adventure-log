@@ -1,7 +1,8 @@
-FROM node:latest as build-stage
+FROM node:lts as build-stage
 WORKDIR /app
 COPY frontend/package*.json ./
-RUN npm install
+RUN npm install -g npm@11.2.0 && \
+    npm install
 COPY ./frontend .
 RUN npm run build
 

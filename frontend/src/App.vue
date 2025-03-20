@@ -50,7 +50,7 @@ export default {
   methods: {
     async fetchProducts() {
       try {
-        const response = await axios.get(`/products`);
+        const response = await axios.get(`/api/products`);
         const productsData = response.data;
 
         // Populate dropdown options with unique values
@@ -70,7 +70,7 @@ export default {
       }
 
       try {
-        const response = await axios.get(`/products/${productId}`);
+        const response = await axios.get(`/api/products/${productId}`);
         this.selectedProduct = response.data;
       } catch (error) {
         console.error("Error fetching product details:", error);
@@ -78,7 +78,7 @@ export default {
     },
     async addProduct(formData) {
       try {
-        await axios.post(`/products`, formData, {
+        await axios.post(`/api/products`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
@@ -90,7 +90,7 @@ export default {
     },
     async deleteProduct(product) {
       try {
-        await axios.delete(`/products/${product.id}`);
+        await axios.delete(`/api/products/${product.id}`);
         this.fetchProducts(); // Refresh the product list after deletion
       } catch (error) {
         console.error("Error deleting product:", error);

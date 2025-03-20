@@ -132,7 +132,7 @@
         }
   
         try {
-          await axios.post(`/products/${this.product.id}/ratings`, this.newRating);
+          await axios.post(`/api/products/${this.product.id}/ratings`, this.newRating);
           this.$emit("refresh-product"); // Emit an event to refresh the product details
           this.showAddRatingDialog = false; // Close the dialog
           this.newRating = { score: null, comment: "" }; // Reset the form
@@ -144,7 +144,7 @@
         if (!this.newBarcode.trim()) return;
 
         try {
-          const response = await axios.post(`/products/${this.product.id}/barcodes`, {
+          const response = await axios.post(`/api/products/${this.product.id}/barcodes`, {
             code: this.newBarcode,
           });
           this.product.barcodes.push(response.data);
@@ -161,7 +161,7 @@
     async deleteBarcode(barcode) {
       try {
         const barcodeId = this.product.barcodes.find((b) => b === barcode).id;
-        await axios.delete(`/barcodes/${barcodeId}`);
+        await axios.delete(`/api/barcodes/${barcodeId}`);
         this.product.barcodes = this.product.barcodes.filter((b) => b !== barcode);
       } catch (error) {
         console.error('Error deleting barcode:', error);

@@ -1,5 +1,6 @@
 import base64
 from datetime import datetime
+import os
 from typing import Optional
 
 from flask import Flask, request, jsonify
@@ -15,6 +16,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///products.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['DEBUG'] = os.getenv('FLASK_DEBUG', False)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 CORS(app)
@@ -83,7 +85,7 @@ class Rating(db.Model):
 
 
 # Routes
-@app.route('/products/<int:product_id>', methods=['GET'])
+@app.route('/api/products/<int:product_id>', methods=['GET'])
 def get_product_details(product_id):
     product = Product.query.get(product_id)
     if not product:
@@ -114,7 +116,7 @@ def get_product_details(product_id):
     })
 
 
-@app.route('/products', methods=['GET'])
+@app.route('/api/products', methods=['GET'])
 def get_products():
     products = Product.query.all()
     return jsonify([
@@ -132,7 +134,7 @@ def get_products():
     ])
 
 
-@app.route('/products', methods=['POST'])
+@app.route('/api/products', methods=['POST'])
 def add_product():
     data = request.form
     image = None
@@ -170,7 +172,7 @@ def add_product():
     return jsonify({"message": "Product added successfully!"}), 201
 
 
-@app.route('/products/<int:product_id>/ratings', methods=['POST'])
+@app.route('/api/products/<int:product_id>/ratings', methods=['POST'])
 def add_rating(product_id):
     product = Product.query.get(product_id)
     if not product:
@@ -190,7 +192,7 @@ def add_rating(product_id):
     return jsonify({"message": "Rating added successfully!"}), 201
 
 
-@app.route('/products/<int:product_id>', methods=['DELETE'])
+@app.route('/api/products/<int:product_id>', methods=['DELETE'])
 def delete_product(product_id):
     product = Product.query.get(product_id)
     if product:
@@ -214,7 +216,7 @@ def add_barcode(product_id):
         return jsonify({"error": "This barcode already exists."}), 400
 
 
-@app.route('/barcodes/<int:barcode_id>', methods=['DELETE'])
+@app.route('/api/barcodes/<int:barcode_id>', methods=['DELETE'])
 def delete_barcode(barcode_id):
     barcode = Barcode.query.get_or_404(barcode_id)
     db.session.delete(barcode)
@@ -222,7 +224,7 @@ def delete_barcode(barcode_id):
     return jsonify({"message": "Barcode deleted successfully!"}), 200
 
 
-@app.route('/scan', methods=['POST'])
+@app.route('/api/scan', methods=['POST'])
 def scan_barcode():
     from pyzbar.pyzbar import decode
     from PIL import Image
@@ -236,8 +238,9 @@ def scan_barcode():
     return jsonify({"message": "No barcode detected"}), 400
 
 
-# Initialize the database
+with app.app_context():
+    db.create_all()  # Initialize the database
+
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()  # Initialize the database
-    app.run(debug=True, host='0.0.0.0', port=5050)
+    app.run(debug=True, host='0.0.0.0', port=5000)
