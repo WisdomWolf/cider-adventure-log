@@ -14,7 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///products.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('FLASK_DB_URI', 'sqlite:///products.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['DEBUG'] = os.getenv('FLASK_DEBUG', False)
 db = SQLAlchemy(app)
