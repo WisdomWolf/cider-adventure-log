@@ -23,4 +23,4 @@ EXPOSE 5000
 # Define the command to run the Flask application using Gunicorn
 CMD ["bash", "web.sh"]
 HEALTHCHECK --interval=5m --timeout=3s \
-  CMD curl -f http://localhost:5000/ || exit 1
+  CMD curl -f http://localhost:5000/api/products || exit 1

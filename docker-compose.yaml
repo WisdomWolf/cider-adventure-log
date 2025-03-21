@@ -7,6 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile
     networks:
+      - default
       - web
     ports:
       - 8080:80
@@ -23,9 +24,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
+    expose:
+      - 5000
     ports:
       - 5000:5000
     networks:
+      - default
       - web
   db:
     image: postgres:17.4-alpine
