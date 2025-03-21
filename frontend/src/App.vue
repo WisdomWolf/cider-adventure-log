@@ -98,6 +98,7 @@ export default {
     },
   },
   mounted() {
+    console.log("Running in", import.meta.env.MODE, "mode.");
     this.fetchProducts();
     console.log("App | Product Brands:", this.productBrands);
     console.log("App | Product Flavors:", this.productFlavors);

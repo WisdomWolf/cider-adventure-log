@@ -20,10 +20,12 @@
         <!-- Product Table -->
         <v-data-table
           :headers="headers"
-          :items="filteredProducts"
+          :items="products"
+          :search="search"
           item-value="id"
           class="elevation-1"
           dense
+          :custom-filter="customFilter"
         >
             <template v-slot:item="{ item }">
                 <tr class="clickable-row" @click="selectProduct(item)">
@@ -134,12 +136,8 @@
     computed: {
       filteredProducts() {
         // Filter products based on the search input
-        const searchLower = this.search.toLowerCase();
-        return this.products.filter((product) =>
-          Object.values(product).some((value) =>
-            String(value).toLowerCase().includes(searchLower)
-          )
-        );
+        console.log('Running filteredProducts')
+        return this.products;
       },
     },
     methods: {
@@ -166,6 +164,27 @@
         this.$emit("delete-product", this.productToDelete);
         this.showDeleteDialog = false; // Close the confirmation dialog
         this.productToDelete = null; // Reset the product to delete
+      },
+      customFilter(value, search, item) {
+        if (!search) return true;
+
+        const searchLower = search.toLowerCase();
+
+        // Access the `columns` property for filtering
+        const matchesDisplayedFields =
+          item.raw.brand.toLowerCase().includes(searchLower) ||
+          item.raw.flavor.toLowerCase().includes(searchLower);
+
+        const matchesBarcode =
+          item.raw.barcodes &&
+          item.raw.barcodes.some((barcode) =>
+            barcode.code.toLowerCase().includes(searchLower)
+          );
+
+        console.log("Matches displayed fields:", matchesDisplayedFields);
+        console.log("Matches barcode:", matchesBarcode);
+
+        return matchesDisplayedFields || matchesBarcode;
       },
     },
   };
