@@ -202,7 +202,7 @@ def delete_product(product_id):
     return jsonify({"message": "Product not found"}), 404
 
 
-@app.route('/products/<int:product_id>/barcodes', methods=['POST'])
+@app.route('/api/products/<int:product_id>/barcodes', methods=['POST'])
 def add_barcode(product_id):
     data = request.json
     product = Product.query.get_or_404(product_id)

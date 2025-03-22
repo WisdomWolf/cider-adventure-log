@@ -319,3 +319,5 @@ pyrightconfig.json
 
 # JetBrains
 .idea/
+
+.DS_Store

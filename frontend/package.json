@@ -9,9 +9,11 @@
     "dev": "vite --host"
   },
   "dependencies": {
+    "@ericblade/quagga2": "^1.8.4",
     "@mdi/font": "5.9.55",
     "axios": "^1.8.3",
     "core-js": "^3.8.3",
+    "quagga": "^0.12.1",
     "roboto-fontface": "*",
     "vue": "^3.2.13",
     "vue-qrcode-reader": "^5.7.1",
