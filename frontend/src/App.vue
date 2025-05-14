@@ -16,7 +16,10 @@
       <ProductDetails
         v-else
         :product="selectedProduct"
+        :productBrands="productBrands"
+        :productFlavors="productFlavors"
         @go-back="selectedProduct = null"
+        @refresh-product="fetchProductDetails(selectedProduct.id)"
       />
     </v-container>
   </v-app>

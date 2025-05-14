@@ -238,6 +238,47 @@ def scan_barcode():
     return jsonify({"message": "No barcode detected"}), 400
 
 
+@app.route('/api/products/<int:product_id>', methods=['PUT'])
+def update_product(product_id):
+    product = Product.query.get_or_404(product_id)
+    data = request.form
+
+    # Update basic product information
+    product.brand = data['brand']
+    product.flavor = data['flavor']
+    product.description = data.get('description')
+
+    # Handle image update
+    if 'image' in request.files:
+        image_file = request.files['image']
+        if image_file:
+            product.image = image_file.read()
+    elif 'image_url' in data and data['image_url']:
+        try:
+            import requests
+            response = requests.get(data['image_url'])
+            if response.status_code == 200:
+                product.image = response.content
+        except Exception as e:
+            return jsonify({"message": "Failed to fetch image from URL", "error": str(e)}), 400
+
+    # Handle barcode update if provided
+    if barcode := data.get('barcode'):
+        # Remove existing barcodes
+        for existing_barcode in product.barcodes:
+            db.session.delete(existing_barcode)
+        # Add new barcode
+        new_barcode = Barcode(code=barcode, product=product)
+        db.session.add(new_barcode)
+
+    try:
+        db.session.commit()
+        return jsonify({"message": "Product updated successfully!"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "Failed to update product", "error": str(e)}), 400
+
+
 with app.app_context():
     db.create_all()  # Initialize the database
 

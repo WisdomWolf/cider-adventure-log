@@ -84,14 +84,18 @@
         type: Array,
         required: true,
       },
+      initialProduct: {
+        type: Object,
+        default: null,
+      },
     },
     data() {
       return {
         newProduct: {
-          brand: "",
-          flavor: "",
-          barcode: "",
-          description: "",
+          brand: this.initialProduct?.brand || "",
+          flavor: this.initialProduct?.flavor || "",
+          barcode: this.initialProduct?.barcode || "",
+          description: this.initialProduct?.description || "",
           image_url: "",
         },
         imageOption: "upload", // Default to image upload
@@ -137,6 +141,9 @@
         };
         this.uploadedImage = null;
         this.imageOption = "upload";
+      },
+      clearField(field) {
+        this.newProduct[field] = "";
       },
     },
   };

@@ -12,7 +12,13 @@
           src="https://via.placeholder.com/200"
           height="200px"
         ></v-img>
-        <v-card-title>{{ product.brand }} - {{ product.flavor }}</v-card-title>
+        <v-card-title>
+          {{ product.brand }} - {{ product.flavor }}
+          <v-spacer></v-spacer>
+          <v-btn icon @click="showEditDialog = true">
+            <v-icon>mdi-pencil</v-icon>
+          </v-btn>
+        </v-card-title>
         <v-card-text>
           <p>{{ product.description }}</p>
           <v-rating
@@ -97,6 +103,29 @@
       </v-dialog>
     </v-container>
 
+    <!-- Edit Product Dialog -->
+    <v-dialog v-model="showEditDialog" max-width="600px">
+      <v-card>
+        <v-card-title>
+          <span class="text-h6">Edit Product</span>
+        </v-card-title>
+        <v-card-text>
+          <ProductForm
+            :productBrands="productBrands"
+            :productFlavors="productFlavors"
+            :initialProduct="product"
+            @add-product="handleEditProduct"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="showEditDialog = false">
+            Cancel
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-snackbar v-model="errorSnackbar" :timeout="3000" color="red" top>
       {{ errorMessage }}
     </v-snackbar>
@@ -104,17 +133,30 @@
   
   <script>
   import axios from "@/axios"; // Use your configured Axios instance
+  import ProductForm from "./ProductForm.vue";
 
   export default {
+    components: {
+      ProductForm
+    },
     props: {
       product: {
         type: Object,
+        required: true,
+      },
+      productBrands: {
+        type: Array,
+        required: true,
+      },
+      productFlavors: {
+        type: Array,
         required: true,
       },
     },
     data() {
       return {
         showAddRatingDialog: false,
+        showEditDialog: false,
         newRating: {
           score: null,
           comment: "",
@@ -165,6 +207,20 @@
         this.product.barcodes = this.product.barcodes.filter((b) => b !== barcode);
       } catch (error) {
         console.error('Error deleting barcode:', error);
+      }
+    },
+    async handleEditProduct(formData) {
+      try {
+        await axios.put(`/api/products/${this.product.id}`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        this.$emit("refresh-product");
+        this.showEditDialog = false;
+      } catch (error) {
+        this.errorMessage = "Error updating product: " + (error.response?.data?.message || error.message);
+        this.errorSnackbar = true;
       }
     },
     },
