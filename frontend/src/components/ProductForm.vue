@@ -69,7 +69,7 @@
         clearable
       ></v-text-field>
   
-      <v-btn type="submit" color="primary">Add Product</v-btn>
+      <v-btn type="submit" color="primary">{{ initialProduct ? 'Update Product' : 'Add Product' }}</v-btn>
     </form>
   </template>
   
