@@ -9,8 +9,9 @@
         ></v-img>
         <v-img
           v-else
-          src="https://via.placeholder.com/200"
+          src="@/assets/stock-cider.svg"
           height="200px"
+          contain
         ></v-img>
         <v-card-title>
           {{ product.brand }} - {{ product.flavor }}
