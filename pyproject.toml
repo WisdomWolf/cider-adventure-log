@@ -1,29 +1,21 @@
 [project]
-name = "cider-app"
+name = "cider-adventure-log"
 version = "0.1.0"
-description = "Interactive log for cider exploration tracking"
-authors = [
-    {name = "WisdomWolf",email = "wisdomwolf@gmail.com"}
-]
+description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13,<4.0"
+requires-python = ">=3.14"
 dependencies = [
-    "flask (>=3.1.0,<4.0.0)",
-    "flask-sqlalchemy (>=3.1.1,<4.0.0)",
-    "pyzbar (>=0.1.9,<0.2.0)",
-    "pillow (>=11.1.0,<12.0.0)",
-    "flask-cors (>=5.0.1,<6.0.0)",
-    "flask-migrate (>=4.1.0,<5.0.0)",
-    "psycopg2 (>=2.9.10,<3.0.0)",
+    "flask>=3.1,<4.0",
+    "flask-cors~=5.0.1",
+    "flask-migrate~=4.1",
+    "flask-pyoidc>=3.14.3",
+    "flask-sqlalchemy~=3.1",
+    "pillow~=11.0",
+    "psycopg2~=2.9.10",
+    "pyzbar~=0.1.9",
 ]
 
-[tool.poetry]
-package-mode = false
-
-[tool.poetry.group.dev.dependencies]
-ipython = "^9.0.2"
-requests = "^2.32.3"
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[dependency-groups]
+dev = [
+    "ipython>=9.9.0",
+]
