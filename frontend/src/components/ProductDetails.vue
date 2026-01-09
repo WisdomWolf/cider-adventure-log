@@ -9,10 +9,11 @@
         ></v-img>
         <v-img
           v-else
-          src="@/assets/stock-cider.svg"
           height="200px"
           contain
-        ></v-img>
+        >
+          <img src="@/assets/cider-can.png" alt="Cider Can" style="width: 100%; height: 100%; object-fit: contain;" />
+        </v-img>
         <v-card-title>
           {{ product.brand }} - {{ product.flavor }}
           <v-spacer></v-spacer>
@@ -133,7 +134,7 @@
   </template>
   
   <script>
-  import axios from "@/axios"; // Use your configured Axios instance
+  import axios from "@/axios";
   import ProductForm from "./ProductForm.vue";
 
   export default {
