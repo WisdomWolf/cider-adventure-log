@@ -20,7 +20,13 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: ['cider-dev.wisenet.dev']
+    allowedHosts: ['cider-dev.wisenet.dev'],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5050',
+        changeOrigin: true,
+      },
+    },
   }
   /* remove the need to specify .vue files https://vitejs.dev/config/#resolve-extensions
   resolve: {

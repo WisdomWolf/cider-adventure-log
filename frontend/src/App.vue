@@ -1,7 +1,15 @@
 <template>
   <v-app>
-    <v-container>
-      <h1 class="text-center">Cider Adventure Log</h1>
+    <v-container v-if="!authChecked">
+      <!-- Waiting on the initial auth check -->
+    </v-container>
+    <LoginView v-else-if="!currentUser" @logged-in="handleLoggedIn" />
+    <v-container v-else>
+      <div class="d-flex align-center">
+        <h1 class="text-center flex-grow-1">Cider Adventure Log</h1>
+        <span class="text-body-2 mr-2">{{ currentUser.display_name || currentUser.email }}</span>
+        <v-btn size="small" variant="text" @click="handleLogout">Log out</v-btn>
+      </div>
       <div v-if="!selectedProduct">
         <ProductTable
           :products="products"
@@ -29,13 +37,16 @@
 import ProductTable from "./components/ProductTable.vue";
 import ProductDetails from "./components/ProductDetails.vue";
 import ProductForm from "./components/ProductForm.vue";
-import axios from "axios";
+import LoginView from "./components/LoginView.vue";
+import axios from "./axios";
+import { fetchCurrentUser, logout } from "./services/auth";
 
 export default {
   components: {
     ProductTable,
     ProductDetails,
     ProductForm,
+    LoginView,
   },
   data() {
     return {
@@ -48,9 +59,24 @@ export default {
       productBrands: [],
       productFlavors: [],
       selectedProduct: null,
+      authChecked: false,
+      currentUser: null,
     };
   },
   methods: {
+    async handleLoggedIn(user) {
+      this.currentUser = user;
+      this.fetchProducts();
+    },
+    async handleLogout() {
+      try {
+        await logout();
+      } catch (error) {
+        console.error("Error logging out:", error);
+      }
+      this.currentUser = null;
+      this.selectedProduct = null;
+    },
     async fetchProducts() {
       try {
         const response = await axios.get(`/api/products`);
@@ -100,11 +126,18 @@ export default {
       }
     },
   },
-  mounted() {
+  async mounted() {
     console.log("Running in", import.meta.env.MODE, "mode.");
-    this.fetchProducts();
-    console.log("App | Product Brands:", this.productBrands);
-    console.log("App | Product Flavors:", this.productFlavors);
+    try {
+      this.currentUser = await fetchCurrentUser();
+    } catch (error) {
+      console.error("Error checking auth state:", error);
+    } finally {
+      this.authChecked = true;
+    }
+    if (this.currentUser) {
+      this.fetchProducts();
+    }
   },
 };
 </script>

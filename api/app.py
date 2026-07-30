@@ -1,287 +1,35 @@
-import base64
-from datetime import datetime
-import os
-from typing import Optional
+from flask import Flask
 
-from flask import Flask, request, jsonify
-from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS
-from sqlalchemy import func
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Mapped, mapped_column
+from .auth import auth_bp, init_oidc
+from .cli import register_cli
+from .config import get_config
+from .extensions import cors, db, login_manager, migrate
+from .routes import main_bp
 
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('FLASK_DB_URI', 'sqlite:///products.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['DEBUG'] = os.getenv('FLASK_DEBUG', False)
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-CORS(app)
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(get_config())
 
-# Models
-class Product(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    brand: Mapped[str]
-    flavor: Mapped[str]
-    description: Mapped[Optional[str]]
-    image = mapped_column(db.LargeBinary, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        insert_default=func.now(),
-        default=None,
-        nullable=True
-    )
+    db.init_app(app)
+    migrate.init_app(app, db)
+    login_manager.init_app(app)
+    # CORS is not credentialed: the frontend always talks to the API same-origin
+    # (via a dev-server proxy locally, nginx in prod), so no cross-origin cookies.
+    cors.init_app(app)
 
-    ratings: Mapped[list["Rating"]] = db.relationship(back_populates='product')
-    barcodes: Mapped[list["Barcode"]] = db.relationship(
-        back_populates='product',
-        cascade="all, delete-orphan"
-    )
+    app.register_blueprint(main_bp)
+    app.register_blueprint(auth_bp)
 
-    @hybrid_property
-    def average_rating(self) -> float:
-        if self.ratings:
-            return sum(r.score for r in self.ratings) / len(self.ratings)
-        else:
-            return None
+    if app.config.get('SSO_ENABLED'):
+        init_oidc(app)
+
+    register_cli(app)
+
+    return app
 
 
-class Barcode(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    product_id: Mapped[int] = mapped_column(
-        db.ForeignKey('product.id'),
-        nullable=False
-    )
-    code: Mapped[str] = mapped_column(nullable=False, unique=True)
-    created_at: Mapped[datetime] = mapped_column(
-        insert_default=func.now(),
-        default=None,
-        nullable=True
-    )
-
-    product: Mapped["Product"] = db.relationship(back_populates="barcodes")
-
-
-class Rating(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    product_id: Mapped[int] = mapped_column(
-        db.ForeignKey('product.id'),
-        nullable=False
-    )
-    score: Mapped[int]
-    comment: Mapped[Optional[str]]
-    purchase_location: Mapped[Optional[str]]
-    consumption_location: Mapped[Optional[str]]
-    consumption_method: Mapped[Optional[str]]
-    created_at: Mapped[datetime] = mapped_column(
-        insert_default=func.now(),
-        default=None,
-        nullable=True
-    )
-
-    product: Mapped["Product"] = db.relationship(back_populates="ratings")
-
-
-# Routes
-@app.route('/api/products/<int:product_id>', methods=['GET'])
-def get_product_details(product_id):
-    product = Product.query.get(product_id)
-    if not product:
-        return jsonify({"message": "Product not found"}), 404
-
-    # Convert the binary image data to a Base64 string (if it exists)
-    image_base64 = None
-    if product.image:
-        image_base64 = base64.b64encode(product.image).decode('utf-8')
-
-    ratings = [
-        {"id": r.id, "score": r.score, "comment": r.comment}
-        for r in product.ratings
-    ]
-
-    return jsonify({
-        "id": product.id,
-        "flavor": product.flavor,
-        "brand": product.brand,
-        "barcodes": [
-                {"id": barcode.id, "code": barcode.code}
-                for barcode in product.barcodes
-        ],
-        "description": product.description,
-        "image": image_base64,
-        "ratings": ratings,
-        "average_rating": product.average_rating
-    })
-
-
-@app.route('/api/products', methods=['GET'])
-def get_products():
-    products = Product.query.all()
-    return jsonify([
-        {
-            "id": p.id,
-            "brand": p.brand,
-            "flavor": p.flavor,
-            "barcodes": [
-                {"id": barcode.id, "code": barcode.code}
-                for barcode in p.barcodes
-            ],
-            "average_rating": p.average_rating
-        }
-        for p in products
-    ])
-
-
-@app.route('/api/products', methods=['POST'])
-def add_product():
-    data = request.form
-    image = None
-
-    # Handle image upload
-    if 'image' in request.files:
-        image_file = request.files['image']
-        if image_file:
-            image = image_file.read()
-
-    # Handle image URL
-    if 'image_url' in data and data['image_url']:
-        try:
-            import requests
-            response = requests.get(data['image_url'])
-            if response.status_code == 200:
-                image = response.content  # Download and store the image as binary data
-        except Exception as e:
-            return jsonify({"message": "Failed to fetch image from URL", "error": str(e)}), 400
-
-    product = Product(
-        brand=data['brand'],
-        flavor=data['flavor'],
-        description=data.get('description'),
-        image=image
-    )
-    
-    db.session.add(product)
-
-    if barcode := data.get('barcode'):
-        new_barcode = Barcode(code=barcode, product=product)
-        db.session.add(new_barcode)
-
-    db.session.commit()
-    return jsonify({"message": "Product added successfully!"}), 201
-
-
-@app.route('/api/products/<int:product_id>/ratings', methods=['POST'])
-def add_rating(product_id):
-    product = Product.query.get(product_id)
-    if not product:
-        return jsonify({"message": "Product not found"}), 404
-
-    data = request.json
-    score = data.get('score')
-    comment = data.get('comment', '')
-
-    if not score or not (1 <= score <= 5):
-        return jsonify({"message": "Invalid rating score. Must be between 1 and 5."}), 400
-
-    rating = Rating(score=score, comment=comment, product_id=product_id)
-    db.session.add(rating)
-    db.session.commit()
-
-    return jsonify({"message": "Rating added successfully!"}), 201
-
-
-@app.route('/api/products/<int:product_id>', methods=['DELETE'])
-def delete_product(product_id):
-    product = Product.query.get(product_id)
-    if product:
-        db.session.delete(product)
-        db.session.commit()
-        return jsonify({"message": "Product deleted successfully!"}), 200
-    return jsonify({"message": "Product not found"}), 404
-
-
-@app.route('/api/products/<int:product_id>/barcodes', methods=['POST'])
-def add_barcode(product_id):
-    data = request.json
-    product = Product.query.get_or_404(product_id)
-    new_barcode = Barcode(code=data['code'], product=product)
-    try:
-        db.session.add(new_barcode)
-        db.session.commit()
-        return jsonify({"id": new_barcode.id, "code": new_barcode.code}), 201
-    except IntegrityError:
-        db.session.rollback()
-        return jsonify({"error": "This barcode already exists."}), 400
-
-
-@app.route('/api/barcodes/<int:barcode_id>', methods=['DELETE'])
-def delete_barcode(barcode_id):
-    barcode = Barcode.query.get_or_404(barcode_id)
-    db.session.delete(barcode)
-    db.session.commit()
-    return jsonify({"message": "Barcode deleted successfully!"}), 200
-
-
-@app.route('/api/scan', methods=['POST'])
-def scan_barcode():
-    from pyzbar.pyzbar import decode
-    from PIL import Image
-    import io
-
-    file = request.files['image']
-    image = Image.open(io.BytesIO(file.read()))
-    decoded_objects = decode(image)
-    if decoded_objects:
-        return jsonify({"barcode": decoded_objects[0].data.decode('utf-8')})
-    return jsonify({"message": "No barcode detected"}), 400
-
-
-@app.route('/api/products/<int:product_id>', methods=['PUT'])
-def update_product(product_id):
-    product = Product.query.get_or_404(product_id)
-    data = request.form
-
-    # Update basic product information
-    product.brand = data['brand']
-    product.flavor = data['flavor']
-    product.description = data.get('description')
-
-    # Handle image update
-    if 'image' in request.files:
-        image_file = request.files['image']
-        if image_file:
-            product.image = image_file.read()
-    elif 'image_url' in data and data['image_url']:
-        try:
-            import requests
-            response = requests.get(data['image_url'])
-            if response.status_code == 200:
-                product.image = response.content
-        except Exception as e:
-            return jsonify({"message": "Failed to fetch image from URL", "error": str(e)}), 400
-
-    # Handle barcode update if provided
-    if barcode := data.get('barcode'):
-        # Remove existing barcodes
-        for existing_barcode in product.barcodes:
-            db.session.delete(existing_barcode)
-        # Add new barcode
-        new_barcode = Barcode(code=barcode, product=product)
-        db.session.add(new_barcode)
-
-    try:
-        db.session.commit()
-        return jsonify({"message": "Product updated successfully!"}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"message": "Failed to update product", "error": str(e)}), 400
-
-
-with app.app_context():
-    db.create_all()  # Initialize the database
-
+app = create_app()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
