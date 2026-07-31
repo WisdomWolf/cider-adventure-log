@@ -30,6 +30,9 @@
         @refresh-product="fetchProductDetails(selectedProduct.id)"
       />
     </v-container>
+    <v-footer app class="justify-center text-caption text-medium-emphasis">
+      Built {{ buildDate }}
+    </v-footer>
   </v-app>
 </template>
 
@@ -61,6 +64,14 @@ export default {
       selectedProduct: null,
       authChecked: false,
       currentUser: null,
+      buildDate: new Date(__BUILD_TIME__).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short',
+      }),
     };
   },
   methods: {
