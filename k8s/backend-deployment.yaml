@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cider-log-api
+  name: cask-and-cup-backend
   namespace: cask-and-cup
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cider-log-api
+      app: cask-and-cup-backend
   template:
     metadata:
       labels:
-        app: cider-log-api
+        app: cask-and-cup-backend
       annotations:
         reloader.stakater.com/auto: "true"
     spec:
@@ -72,11 +72,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: cider-log-api
+  name: cask-and-cup-backend
   namespace: cask-and-cup
 spec:
   selector:
-    app: cider-log-api
+    app: cask-and-cup-backend
   ports:
     - port: 5000
       targetPort: 5000

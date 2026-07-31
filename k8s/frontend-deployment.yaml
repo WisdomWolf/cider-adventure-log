@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cider-log-frontend
+  name: cask-and-cup-frontend
   namespace: cask-and-cup
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cider-log-frontend
+      app: cask-and-cup-frontend
   template:
     metadata:
       labels:
-        app: cider-log-frontend
+        app: cask-and-cup-frontend
     spec:
       containers:
         - name: frontend
@@ -29,11 +29,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: cider-log-frontend
+  name: cask-and-cup-frontend
   namespace: cask-and-cup
 spec:
   selector:
-    app: cider-log-frontend
+    app: cask-and-cup-frontend
   ports:
     - port: 80
       targetPort: 80

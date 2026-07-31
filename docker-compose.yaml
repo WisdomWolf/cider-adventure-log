@@ -1,6 +1,6 @@
 services:
   frontend:
-    container_name: cider-log-frontend
+    container_name: cask-and-cup-frontend
     build:
       context: .
       dockerfile: Dockerfile
@@ -9,8 +9,8 @@ services:
     ports:
       - 8080:80
   api:
-    container_name: cider-log-api
-    hostname: cider-api
+    container_name: cask-and-cup-backend
+    hostname: cask-and-cup-backend
     environment:
       PORT: 5000
       FLASK_DEBUG:

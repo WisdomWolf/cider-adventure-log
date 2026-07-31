@@ -12,7 +12,7 @@ metadata:
     gethomepage.dev/group: "Home"
     gethomepage.dev/icon: "mdi-glass-mug-variant"
     gethomepage.dev/href: "https://caskandcup.developingwisdom.org"
-    gethomepage.dev/pod-selector: "app=cider-log-frontend"
+    gethomepage.dev/pod-selector: "app=cask-and-cup-frontend"
 spec:
   entryPoints:
     - websecure
@@ -20,6 +20,6 @@ spec:
     - match: Host(`caskandcup.developingwisdom.org`)
       kind: Rule
       services:
-        - name: cider-log-frontend
+        - name: cask-and-cup-frontend
           port: 80
   tls: {}
