@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cider-log-api
+  namespace: cask-and-cup
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cider-log-api
+  template:
+    metadata:
+      labels:
+        app: cider-log-api
+      annotations:
+        reloader.stakater.com/auto: "true"
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/wisdomwolf/cider-adventure-log-api:sha-0508f15
+          ports:
+            - containerPort: 5000
+          env:
+            - name: APP_ENV
+              value: "production"
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cask-and-cup-secrets
+                  key: SECRET_KEY
+            - name: FLASK_DB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: cask-and-cup-secrets
+                  key: FLASK_DB_URI
+            - name: AUTHENTIK_ISSUER
+              value: "https://authentik.developingwisdom.org/application/o/cask-and-cup/"
+            - name: AUTHENTIK_REDIRECT_URI
+              value: "https://caskandcup.developingwisdom.org/api/auth/sso/callback"
+            - name: AUTHENTIK_AUTO_PROVISION_GROUP
+              value: "Cask & Cup Users"
+            - name: AUTHENTIK_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: cask-and-cup-secrets
+                  key: AUTHENTIK_CLIENT_ID
+            - name: AUTHENTIK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: cask-and-cup-secrets
+                  key: AUTHENTIK_CLIENT_SECRET
+          livenessProbe:
+            httpGet:
+              path: /api/products
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/products
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cider-log-api
+  namespace: cask-and-cup
+spec:
+  selector:
+    app: cider-log-api
+  ports:
+    - port: 5000
+      targetPort: 5000

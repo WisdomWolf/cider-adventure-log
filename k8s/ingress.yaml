@@ -1,0 +1,25 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: cask-and-cup
+  namespace: cask-and-cup
+  annotations:
+    cloudflare.tunnel/expose: "true"
+    cloudflare.tunnel/hostname: "caskandcup.developingwisdom.org"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Cask & Cup"
+    gethomepage.dev/description: "Cider tasting and rating log"
+    gethomepage.dev/group: "Home"
+    gethomepage.dev/icon: "mdi-glass-mug-variant"
+    gethomepage.dev/href: "https://caskandcup.developingwisdom.org"
+    gethomepage.dev/pod-selector: "app=cider-log-frontend"
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`caskandcup.developingwisdom.org`)
+      kind: Rule
+      services:
+        - name: cider-log-frontend
+          port: 80
+  tls: {}

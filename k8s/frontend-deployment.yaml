@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cider-log-frontend
+  namespace: cask-and-cup
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cider-log-frontend
+  template:
+    metadata:
+      labels:
+        app: cider-log-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/wisdomwolf/cider-adventure-log-frontend:sha-0508f15
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cider-log-frontend
+  namespace: cask-and-cup
+spec:
+  selector:
+    app: cider-log-frontend
+  ports:
+    - port: 80
+      targetPort: 80

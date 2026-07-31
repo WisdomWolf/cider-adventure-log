@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cask-and-cup-migrations
+  namespace: cask-and-cup
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate
+          image: ghcr.io/wisdomwolf/cider-adventure-log-api:sha-0508f15
+          command: ["flask", "db", "upgrade"]
+          env:
+            - name: APP_ENV
+              value: "production"
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cask-and-cup-secrets
+                  key: SECRET_KEY
+            - name: FLASK_DB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: cask-and-cup-secrets
+                  key: FLASK_DB_URI
