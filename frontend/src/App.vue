@@ -6,7 +6,7 @@
     <LoginView v-else-if="!currentUser" @logged-in="handleLoggedIn" />
     <v-container v-else>
       <div class="d-flex align-center">
-        <h1 class="text-center flex-grow-1">Cider Adventure Log</h1>
+        <h1 class="text-center flex-grow-1">Cask &amp; Cup</h1>
         <span class="text-body-2 mr-2">{{ currentUser.display_name || currentUser.email }}</span>
         <v-btn size="small" variant="text" @click="handleLogout">Log out</v-btn>
       </div>
