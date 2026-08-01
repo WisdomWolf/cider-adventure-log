@@ -100,6 +100,9 @@ class Beverage(db.Model):
                     "score": r.score,
                     "comment": r.comment,
                     "attributes": r.attributes,
+                    "user_id": r.user_id,
+                    "taster": r.user.display_name or r.user.email,
+                    "created_at": r.created_at.isoformat() if r.created_at else None,
                 }
                 for r in self.ratings
             ],

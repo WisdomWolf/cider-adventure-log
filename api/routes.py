@@ -130,6 +130,33 @@ def add_rating(beverage_id):
     return jsonify({"message": "Rating added successfully!"}), 201
 
 
+@main_bp.route('/api/ratings/<int:rating_id>', methods=['PUT'])
+@login_required
+def update_rating(rating_id):
+    rating = Rating.query.get_or_404(rating_id)
+    data = request.json or {}
+    score = data.get('score')
+
+    if not score or not (1 <= score <= 5):
+        return jsonify({"message": "Invalid rating score. Must be between 1 and 5."}), 400
+
+    rating.score = score
+    rating.comment = data.get('comment', '')
+    rating.attributes = data.get('attributes') or None
+    db.session.commit()
+
+    return jsonify({"message": "Rating updated successfully!"}), 200
+
+
+@main_bp.route('/api/ratings/<int:rating_id>', methods=['DELETE'])
+@login_required
+def delete_rating(rating_id):
+    rating = Rating.query.get_or_404(rating_id)
+    db.session.delete(rating)
+    db.session.commit()
+    return jsonify({"message": "Rating deleted successfully!"}), 200
+
+
 @main_bp.route('/api/beverages/<int:beverage_id>', methods=['DELETE'])
 @login_required
 def delete_beverage(beverage_id):

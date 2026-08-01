@@ -66,20 +66,30 @@
       <v-list bg-color="transparent">
         <p class="font-display text-h6 font-weight-bold mt-2">Ratings</p>
         <v-list-item
-          v-for="(rating, index) in beverage.ratings"
-          :key="index"
+          v-for="rating in beverage.ratings"
+          :key="rating.id"
           class="px-0"
         >
           <v-list-item-content>
-            <v-list-item-title>
+            <div class="d-flex align-center flex-wrap ga-2">
               <v-rating
                 v-model="rating.score"
                 readonly
                 density="compact"
                 color="glow"
               ></v-rating>
-            </v-list-item-title>
-            <v-list-item-subtitle>{{ rating.comment }}</v-list-item-subtitle>
+              <span class="text-caption text-medium-emphasis">
+                {{ rating.taster }}<template v-if="rating.created_at"> &middot; {{ formatDate(rating.created_at) }}</template>
+              </span>
+              <v-spacer></v-spacer>
+              <v-btn icon size="x-small" variant="text" @click="openEditRating(rating)">
+                <v-icon size="18">mdi-pencil</v-icon>
+              </v-btn>
+              <v-btn icon size="x-small" variant="text" color="error" @click="confirmDeleteRating(rating)">
+                <v-icon size="18">mdi-trash-can</v-icon>
+              </v-btn>
+            </div>
+            <p v-if="rating.comment" class="text-body-2 mt-1" style="white-space: normal;">{{ rating.comment }}</p>
             <div v-if="rating.attributes" class="text-caption text-medium-emphasis font-mono">
               <span v-for="field in ratingAttributeFields" :key="field.key">
                 <template v-if="rating.attributes[field.key]">
@@ -92,12 +102,14 @@
       </v-list>
 
       <!-- Button to open the Add Rating dialog -->
-      <v-btn color="primary" class="font-weight-bold" @click="showAddRatingDialog = true">Add Rating</v-btn>
+      <v-btn color="primary" class="font-weight-bold" @click="openAddRating">Add Rating</v-btn>
 
-      <!-- Add Rating Dialog -->
+      <!-- Add/Edit Rating Dialog -->
       <v-dialog v-model="showAddRatingDialog" max-width="500px">
         <v-card>
-          <v-card-title class="font-display text-h6 font-weight-bold">Add a New Rating</v-card-title>
+          <v-card-title class="font-display text-h6 font-weight-bold">
+            {{ editingRatingId ? "Edit Rating" : "Add a New Rating" }}
+          </v-card-title>
           <v-card-text>
             <v-form ref="ratingForm" v-model="valid">
               <v-rating
@@ -123,8 +135,23 @@
             </v-form>
           </v-card-text>
           <v-card-actions>
-            <v-btn color="primary" @click="addRating">Submit</v-btn>
+            <v-btn color="primary" @click="submitRating">Submit</v-btn>
             <v-btn variant="text" @click="showAddRatingDialog = false">Cancel</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Delete Rating Confirmation Dialog -->
+      <v-dialog v-model="showDeleteRatingDialog" max-width="400px">
+        <v-card>
+          <v-card-title class="font-display text-h6 font-weight-bold">Delete Rating</v-card-title>
+          <v-card-text>
+            Are you sure you want to delete this rating? This action cannot be undone.
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="error" variant="text" @click="deleteRating">Delete</v-btn>
+            <v-btn variant="text" @click="showDeleteRatingDialog = false">Cancel</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -185,6 +212,9 @@
       return {
         showAddRatingDialog: false,
         showEditDialog: false,
+        showDeleteRatingDialog: false,
+        editingRatingId: null,
+        ratingToDelete: null,
         newRating: {
           score: null,
           comment: "",
@@ -206,18 +236,61 @@
     },
     methods: {
       typeLabel,
-      async addRating() {
+      formatDate(isoString) {
+        return new Date(isoString).toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+      },
+      openAddRating() {
+        this.editingRatingId = null;
+        this.newRating = { score: null, comment: "", attributes: {} };
+        this.showAddRatingDialog = true;
+      },
+      openEditRating(rating) {
+        this.editingRatingId = rating.id;
+        this.newRating = {
+          score: rating.score,
+          comment: rating.comment || "",
+          attributes: { ...(rating.attributes || {}) },
+        };
+        this.showAddRatingDialog = true;
+      },
+      async submitRating() {
         if (!this.valid) {
           return;
         }
 
         try {
-          await axios.post(`/api/beverages/${this.beverage.id}/ratings`, this.newRating);
+          if (this.editingRatingId) {
+            await axios.put(`/api/ratings/${this.editingRatingId}`, this.newRating);
+          } else {
+            await axios.post(`/api/beverages/${this.beverage.id}/ratings`, this.newRating);
+          }
           this.$emit("refresh-beverage"); // Emit an event to refresh the beverage details
           this.showAddRatingDialog = false; // Close the dialog
+          this.editingRatingId = null;
           this.newRating = { score: null, comment: "", attributes: {} }; // Reset the form
         } catch (error) {
-          console.error("Error adding rating:", error);
+          console.error("Error saving rating:", error);
+        }
+      },
+      confirmDeleteRating(rating) {
+        this.ratingToDelete = rating;
+        this.showDeleteRatingDialog = true;
+      },
+      async deleteRating() {
+        if (!this.ratingToDelete) return;
+
+        try {
+          await axios.delete(`/api/ratings/${this.ratingToDelete.id}`);
+          this.$emit("refresh-beverage");
+        } catch (error) {
+          console.error("Error deleting rating:", error);
+        } finally {
+          this.showDeleteRatingDialog = false;
+          this.ratingToDelete = null;
         }
       },
       async addBarcode() {
