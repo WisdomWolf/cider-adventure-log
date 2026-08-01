@@ -133,20 +133,29 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Import Ratings Dialog -->
+    <v-dialog v-model="showImportDialog" max-width="800px" persistent>
+      <ImportRatings @close="showImportDialog = false" @imported="handleImported" />
+    </v-dialog>
   </v-container>
-  <!-- Add New Beverage Button -->
+  <!-- Add New Beverage / Import Buttons -->
   <v-btn color="primary" class="font-weight-bold" @click="showAddBeverageDialog = true">
     Add New Beverage
+  </v-btn>
+  <v-btn variant="outlined" color="primary" class="ml-2" @click="showImportDialog = true">
+    Import Ratings
   </v-btn>
 </template>
 
 <script>
 import BeverageForm from "./BeverageForm.vue";
+import ImportRatings from "./ImportRatings.vue";
 import Quagga from '@ericblade/quagga2';
 import { typeLabel } from "../beverageTypes";
 
 export default {
-  components: { BeverageForm },
+  components: { BeverageForm, ImportRatings },
   props: {
     beverages: {
       type: Array,
@@ -165,6 +174,7 @@ export default {
     return {
       search: "",
       showAddBeverageDialog: false,
+      showImportDialog: false,
       showDeleteDialog: false,
       beverageToDelete: null,
       showScanner: false,
@@ -185,6 +195,10 @@ export default {
     handleAddBeverage(formData) {
       this.$emit("add-beverage", formData);
       this.showAddBeverageDialog = false;
+    },
+    handleImported() {
+      this.showImportDialog = false;
+      this.$emit("refresh-beverages");
     },
     selectBeverage(beverage) {
       if (beverage && beverage.id) {

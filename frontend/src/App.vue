@@ -37,6 +37,7 @@
             @add-beverage="addBeverage"
             @view-beverage="fetchBeverageDetails"
             @delete-beverage="deleteBeverage"
+            @refresh-beverages="fetchBeverages"
           />
         </div>
         <!-- Beverage Details -->

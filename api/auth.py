@@ -65,6 +65,13 @@ def auth_config():
     return jsonify({"sso_enabled": current_app.config.get('SSO_ENABLED', False)})
 
 
+@auth_bp.route('/users', methods=['GET'])
+@login_required
+def list_users():
+    users = User.query.order_by(User.display_name, User.email).all()
+    return jsonify([_serialize_user(u) for u in users])
+
+
 def _resolve_sso_user(claims):
     """Look up a local User for the given OIDC claims, auto-provisioning
     only if the user belongs to AUTHENTIK_AUTO_PROVISION_GROUP. Returns
