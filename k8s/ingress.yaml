@@ -10,7 +10,7 @@ metadata:
     gethomepage.dev/name: "Cask & Cup"
     gethomepage.dev/description: "Cider tasting and rating log"
     gethomepage.dev/group: "Home"
-    gethomepage.dev/icon: "mdi-glass-mug-variant"
+    gethomepage.dev/icon: "https://caskandcup.developingwisdom.org/favicon.svg"
     gethomepage.dev/href: "https://caskandcup.developingwisdom.org"
     gethomepage.dev/pod-selector: "app=cask-and-cup-frontend"
 spec:

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Cask &amp; Cup">
+  <rect width="512" height="512" rx="112.64" fill="#B0592A"/>
+  <circle cx="335.36" cy="256" r="58.88" fill="#F3E9DC"/>
+  <circle cx="335.36" cy="256" r="30.72" fill="#B0592A"/>
+  <defs>
+    <clipPath id="mug-body">
+      <rect x="148.48" y="143.36" width="153.6" height="225.28" rx="10.24"/>
+    </clipPath>
+  </defs>
+  <rect x="148.48" y="143.36" width="153.6" height="225.28" rx="10.24" fill="#F3E9DC"/>
+  <rect x="148.48" y="179.2" width="153.6" height="189.44" fill="#E8A33D" clip-path="url(#mug-body)"/>
+</svg>
