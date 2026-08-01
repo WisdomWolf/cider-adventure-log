@@ -63,43 +63,39 @@
         ></v-text-field>
         <v-btn color="primary" variant="tonal" @click="addBarcode">Add</v-btn>
 
-      <v-list bg-color="transparent">
-        <p class="font-display text-h6 font-weight-bold mt-2">Ratings</p>
-        <v-list-item
+      <p class="font-display text-h6 font-weight-bold mt-4 mb-2">Ratings</p>
+      <div class="d-flex flex-column ga-3 mb-4">
+        <v-card
           v-for="rating in beverage.ratings"
           :key="rating.id"
-          class="px-0"
+          variant="outlined"
+          class="pa-3"
         >
-          <v-list-item-content>
-            <div class="d-flex align-center flex-wrap ga-2">
-              <v-rating
-                v-model="rating.score"
-                readonly
-                density="compact"
-                color="glow"
-              ></v-rating>
-              <span class="text-caption text-medium-emphasis">
-                {{ rating.taster }}<template v-if="rating.created_at"> &middot; {{ formatDate(rating.created_at) }}</template>
-              </span>
-              <v-spacer></v-spacer>
-              <v-btn icon size="x-small" variant="text" @click="openEditRating(rating)">
-                <v-icon size="18">mdi-pencil</v-icon>
-              </v-btn>
-              <v-btn icon size="x-small" variant="text" color="error" @click="confirmDeleteRating(rating)">
-                <v-icon size="18">mdi-trash-can</v-icon>
-              </v-btn>
-            </div>
-            <p v-if="rating.comment" class="text-body-2 mt-1" style="white-space: normal;">{{ rating.comment }}</p>
-            <div v-if="rating.attributes" class="text-caption text-medium-emphasis font-mono">
-              <span v-for="field in ratingAttributeFields" :key="field.key">
-                <template v-if="rating.attributes[field.key]">
-                  {{ field.label }}: {{ rating.attributes[field.key] }}&nbsp;&nbsp;
-                </template>
-              </span>
-            </div>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
+          <div class="d-flex align-center flex-wrap ga-2">
+            <v-rating
+              v-model="rating.score"
+              readonly
+              density="compact"
+              color="glow"
+            ></v-rating>
+            <span class="text-caption text-medium-emphasis">
+              {{ rating.taster }}<template v-if="rating.created_at"> &middot; {{ formatDate(rating.created_at) }}</template>
+            </span>
+            <v-spacer></v-spacer>
+            <v-btn icon size="x-small" variant="text" @click="openEditRating(rating)">
+              <v-icon size="18">mdi-pencil</v-icon>
+            </v-btn>
+          </div>
+          <p v-if="rating.comment" class="text-body-2 mt-1" style="white-space: normal;">{{ rating.comment }}</p>
+          <div v-if="rating.attributes" class="text-caption text-medium-emphasis font-mono">
+            <span v-for="field in ratingAttributeFields" :key="field.key">
+              <template v-if="rating.attributes[field.key]">
+                {{ field.label }}: {{ rating.attributes[field.key] }}&nbsp;&nbsp;
+              </template>
+            </span>
+          </div>
+        </v-card>
+      </div>
 
       <!-- Button to open the Add Rating dialog -->
       <v-btn color="primary" class="font-weight-bold" @click="openAddRating">Add Rating</v-btn>
@@ -135,8 +131,10 @@
             </v-form>
           </v-card-text>
           <v-card-actions>
-            <v-btn color="primary" @click="submitRating">Submit</v-btn>
+            <v-btn v-if="editingRatingId" color="error" variant="text" @click="confirmDeleteFromEdit">Delete</v-btn>
+            <v-spacer></v-spacer>
             <v-btn variant="text" @click="showAddRatingDialog = false">Cancel</v-btn>
+            <v-btn color="primary" @click="submitRating">Submit</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -276,8 +274,9 @@
           console.error("Error saving rating:", error);
         }
       },
-      confirmDeleteRating(rating) {
-        this.ratingToDelete = rating;
+      confirmDeleteFromEdit() {
+        this.ratingToDelete = { id: this.editingRatingId };
+        this.showAddRatingDialog = false;
         this.showDeleteRatingDialog = true;
       },
       async deleteRating() {
