@@ -1,7 +1,8 @@
 <template>
   <v-container class="fill-height" style="max-width: 420px">
-    <v-card class="w-100">
-      <v-card-title>Log in</v-card-title>
+    <v-card class="w-100" elevation="2">
+      <v-card-title class="font-display text-h4 font-weight-bold pt-6 pb-2">Cask &amp; Cup</v-card-title>
+      <v-card-subtitle class="pb-4">Log in to your tasting log</v-card-subtitle>
       <v-card-text>
         <v-form @submit.prevent="submit">
           <v-text-field
@@ -21,12 +22,12 @@
           <v-alert v-if="errorMessage" type="error" density="compact" class="mb-4">
             {{ errorMessage }}
           </v-alert>
-          <v-btn type="submit" color="primary" block :loading="submitting">Log in</v-btn>
+          <v-btn type="submit" color="primary" class="font-weight-bold" block :loading="submitting">Log in</v-btn>
         </v-form>
 
         <template v-if="ssoEnabled">
           <v-divider class="my-4"></v-divider>
-          <v-btn href="/api/auth/sso/login" variant="outlined" block>Log in with SSO</v-btn>
+          <v-btn href="/api/auth/sso/login" color="primary" variant="outlined" block>Log in with SSO</v-btn>
         </template>
       </v-card-text>
     </v-card>

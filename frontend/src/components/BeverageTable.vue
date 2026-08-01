@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-card>
-      <v-card-title>
+      <v-card-title class="font-display text-h5 font-weight-bold py-4">
         Beverages
         <v-spacer></v-spacer>
       </v-card-title>
@@ -44,21 +44,27 @@
           <tr class="clickable-row" @click="selectBeverage(item)">
             <td>{{ item.brand }}</td>
             <td>{{ item.name }}</td>
-            <td>{{ typeLabel(item.type) }}</td>
             <td>
-              <v-rating
-                v-if="item.average_rating"
-                v-model="item.average_rating"
-                half-increments
-                :size="20"
-                readonly
-                dense
-                color="yellow"
-              ></v-rating>
-              <span v-else>No Ratings</span>
+              <v-chip size="small" :color="item.type" variant="flat" class="font-mono text-uppercase" style="letter-spacing: 0.04em; font-size: 0.68rem;">
+                {{ typeLabel(item.type) }}
+              </v-chip>
             </td>
             <td>
-              <v-btn icon size="x-small" color="red" @click.stop="confirmDelete(item)">
+              <div v-if="item.average_rating" class="d-flex align-center">
+                <v-rating
+                  v-model="item.average_rating"
+                  half-increments
+                  :size="18"
+                  readonly
+                  density="compact"
+                  color="glow"
+                ></v-rating>
+                <span class="font-mono font-weight-bold ml-1 text-body-2">{{ item.average_rating.toFixed(1) }}</span>
+              </div>
+              <span v-else class="text-medium-emphasis">No Ratings</span>
+            </td>
+            <td>
+              <v-btn icon size="x-small" color="error" variant="text" @click.stop="confirmDelete(item)">
                 <v-icon>mdi-trash-can</v-icon>
               </v-btn>
             </td>
@@ -91,8 +97,8 @@
     <!-- Add Beverage Dialog -->
     <v-dialog v-model="showAddBeverageDialog" max-width="600px">
       <v-card>
-        <v-card-title>
-          <span class="text-h6">Add New Beverage</span>
+        <v-card-title class="font-display text-h6 font-weight-bold">
+          Add New Beverage
         </v-card-title>
         <v-card-text>
           <!-- Embed the BeverageForm component -->
@@ -104,7 +110,7 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="showAddBeverageDialog = false">
+          <v-btn variant="text" @click="showAddBeverageDialog = false">
             Close
           </v-btn>
         </v-card-actions>
@@ -114,14 +120,14 @@
     <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="showDeleteDialog" max-width="400px">
       <v-card>
-        <v-card-title class="text-h6">Confirm Deletion</v-card-title>
+        <v-card-title class="font-display text-h6 font-weight-bold">Confirm Deletion</v-card-title>
         <v-card-text>
           Are you sure you want to delete this beverage? This action cannot be undone.
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="red" text @click="deleteBeverage">Delete</v-btn>
-          <v-btn color="blue darken-1" text @click="showDeleteDialog = false">
+          <v-btn color="error" variant="text" @click="deleteBeverage">Delete</v-btn>
+          <v-btn variant="text" @click="showDeleteDialog = false">
             Cancel
           </v-btn>
         </v-card-actions>
@@ -129,7 +135,7 @@
     </v-dialog>
   </v-container>
   <!-- Add New Beverage Button -->
-  <v-btn color="primary" @click="showAddBeverageDialog = true">
+  <v-btn color="primary" class="font-weight-bold" @click="showAddBeverageDialog = true">
     Add New Beverage
   </v-btn>
 </template>
@@ -323,12 +329,12 @@ export default {
 }
 
 .clickable-row:hover {
-  background-color: #f5f5f5;
+  background-color: rgba(var(--v-theme-on-surface), 0.06);
 }
 
 .v-data-table-header th {
-  color: black !important;
-  font-weight: bold;
+  color: rgb(var(--v-theme-on-surface)) !important;
+  font-weight: 700;
 }
 
 #interactive {

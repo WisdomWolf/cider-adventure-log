@@ -88,7 +88,7 @@
         clearable
       ></v-text-field>
 
-      <v-btn type="submit" color="primary">{{ initialBeverage ? 'Update Beverage' : 'Add Beverage' }}</v-btn>
+      <v-btn type="submit" color="primary" class="font-weight-bold mt-2">{{ initialBeverage ? 'Update Beverage' : 'Add Beverage' }}</v-btn>
     </form>
   </template>
 

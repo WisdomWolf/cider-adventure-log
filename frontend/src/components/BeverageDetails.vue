@@ -14,26 +14,28 @@
         >
           <img src="@/assets/cider-can.png" alt="Beverage" style="width: 100%; height: 100%; object-fit: contain;" />
         </v-img>
-        <v-card-title>
-          {{ beverage.brand }} - {{ beverage.name }}
-          <v-chip size="small" class="ml-2">{{ typeLabel(beverage.type) }}</v-chip>
+        <v-card-title class="d-flex align-center flex-wrap ga-2 py-4">
+          <span class="font-display text-h5 font-weight-bold">{{ beverage.brand }} — {{ beverage.name }}</span>
+          <v-chip size="small" :color="beverage.type" variant="flat" class="font-mono text-uppercase" style="letter-spacing: 0.04em; font-size: 0.68rem;">
+            {{ typeLabel(beverage.type) }}
+          </v-chip>
           <v-spacer></v-spacer>
-          <v-btn icon @click="showEditDialog = true">
+          <v-btn icon variant="text" @click="showEditDialog = true">
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
         </v-card-title>
         <v-card-text>
-          <p>{{ beverage.description }}</p>
-          <div v-if="detailFields.length">
-            <div v-for="field in detailFields" :key="field.key">
-              <strong>{{ field.label }}:</strong> {{ beverage.details?.[field.key] }}
+          <p class="text-body-1">{{ beverage.description }}</p>
+          <div v-if="detailFields.length" class="mb-3">
+            <div v-for="field in detailFields" :key="field.key" class="text-body-2">
+              <span class="text-medium-emphasis">{{ field.label }}:</span>
+              <span class="font-mono font-weight-bold">{{ beverage.details?.[field.key] }}</span>
             </div>
           </div>
           <v-rating
             v-model="beverage.average_rating"
             readonly
-            color="amber"
-            background-color="grey lighten-1"
+            color="glow"
           ></v-rating>
         </v-card-text>
       </v-card>
@@ -55,27 +57,30 @@
         <v-text-field
         v-model="newBarcode"
         label="Add Barcode"
+        variant="outlined"
+        density="compact"
         @keyup.enter="addBarcode"
         ></v-text-field>
-        <v-btn @click="addBarcode">Add</v-btn>
+        <v-btn color="primary" variant="tonal" @click="addBarcode">Add</v-btn>
 
-      <v-list>
-        <v-subheader>Ratings</v-subheader>
+      <v-list bg-color="transparent">
+        <p class="font-display text-h6 font-weight-bold mt-2">Ratings</p>
         <v-list-item
           v-for="(rating, index) in beverage.ratings"
           :key="index"
+          class="px-0"
         >
           <v-list-item-content>
             <v-list-item-title>
               <v-rating
                 v-model="rating.score"
                 readonly
-                color="amber"
-                background-color="grey lighten-1"
+                density="compact"
+                color="glow"
               ></v-rating>
             </v-list-item-title>
             <v-list-item-subtitle>{{ rating.comment }}</v-list-item-subtitle>
-            <div v-if="rating.attributes" class="text-caption text-medium-emphasis">
+            <div v-if="rating.attributes" class="text-caption text-medium-emphasis font-mono">
               <span v-for="field in ratingAttributeFields" :key="field.key">
                 <template v-if="rating.attributes[field.key]">
                   {{ field.label }}: {{ rating.attributes[field.key] }}&nbsp;&nbsp;
@@ -87,18 +92,17 @@
       </v-list>
 
       <!-- Button to open the Add Rating dialog -->
-      <v-btn color="primary" @click="showAddRatingDialog = true">Add Rating</v-btn>
+      <v-btn color="primary" class="font-weight-bold" @click="showAddRatingDialog = true">Add Rating</v-btn>
 
       <!-- Add Rating Dialog -->
       <v-dialog v-model="showAddRatingDialog" max-width="500px">
         <v-card>
-          <v-card-title>Add a New Rating</v-card-title>
+          <v-card-title class="font-display text-h6 font-weight-bold">Add a New Rating</v-card-title>
           <v-card-text>
             <v-form ref="ratingForm" v-model="valid">
               <v-rating
                 v-model="newRating.score"
-                color="amber"
-                background-color="grey lighten-1"
+                color="glow"
                 label="Rating Score"
                 required
               ></v-rating>
@@ -120,7 +124,7 @@
           </v-card-text>
           <v-card-actions>
             <v-btn color="primary" @click="addRating">Submit</v-btn>
-            <v-btn text @click="showAddRatingDialog = false">Cancel</v-btn>
+            <v-btn variant="text" @click="showAddRatingDialog = false">Cancel</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -129,8 +133,8 @@
     <!-- Edit Beverage Dialog -->
     <v-dialog v-model="showEditDialog" max-width="600px">
       <v-card>
-        <v-card-title>
-          <span class="text-h6">Edit Beverage</span>
+        <v-card-title class="font-display text-h6 font-weight-bold">
+          Edit Beverage
         </v-card-title>
         <v-card-text>
           <BeverageForm
@@ -142,14 +146,14 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="showEditDialog = false">
+          <v-btn variant="text" @click="showEditDialog = false">
             Cancel
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <v-snackbar v-model="errorSnackbar" :timeout="3000" color="red" top>
+    <v-snackbar v-model="errorSnackbar" :timeout="3000" color="error" location="top">
       {{ errorMessage }}
     </v-snackbar>
   </template>

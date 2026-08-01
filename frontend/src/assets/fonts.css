@@ -1,0 +1,49 @@
+@font-face {
+  font-family: 'Fraunces';
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/Fraunces.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Work Sans';
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/WorkSans.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Space Mono';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/SpaceMono-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Space Mono';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/SpaceMono-Bold.woff2') format('woff2');
+}
+
+:root {
+  --font-display: 'Fraunces', ui-serif, Georgia, serif;
+  --font-body: 'Work Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+}
+
+.v-application {
+  font-family: var(--font-body) !important;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
