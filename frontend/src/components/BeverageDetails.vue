@@ -1,6 +1,6 @@
 <template>
     <v-container>
-      <v-btn @click="$emit('go-back')" color="primary">Back</v-btn>
+      <v-btn @click="$emit('go-back')" color="primary" class="mb-4">Back</v-btn>
       <v-card>
         <v-img
           v-if="beverage.image"
@@ -15,7 +15,7 @@
           <img src="@/assets/cider-can.png" alt="Beverage" style="width: 100%; height: 100%; object-fit: contain;" />
         </v-img>
         <v-card-title class="d-flex align-center flex-wrap ga-2 py-4">
-          <span class="font-display text-h5 font-weight-bold">{{ beverage.brand }} — {{ beverage.name }}</span>
+          <span class="font-display text-h5 font-weight-bold" style="white-space: normal;">{{ beverage.brand }} — {{ beverage.name }}</span>
           <v-chip size="small" :color="beverage.type" variant="flat" class="font-mono text-uppercase" style="letter-spacing: 0.04em; font-size: 0.68rem;">
             {{ typeLabel(beverage.type) }}
           </v-chip>
@@ -68,8 +68,10 @@
         <v-card
           v-for="rating in beverage.ratings"
           :key="rating.id"
-          variant="outlined"
-          class="pa-3"
+          variant="elevated"
+          elevation="2"
+          class="pa-3 clickable-row"
+          @click="openRatingView(rating)"
         >
           <div class="d-flex align-center flex-wrap ga-2">
             <v-rating
@@ -81,10 +83,6 @@
             <span class="text-caption text-medium-emphasis">
               {{ rating.taster }}<template v-if="rating.created_at"> &middot; {{ formatDate(rating.created_at) }}</template>
             </span>
-            <v-spacer></v-spacer>
-            <v-btn icon size="x-small" variant="text" @click="openEditRating(rating)">
-              <v-icon size="18">mdi-pencil</v-icon>
-            </v-btn>
           </div>
           <p v-if="rating.comment" class="text-body-2 mt-1" style="white-space: normal;">{{ rating.comment }}</p>
           <div v-if="rating.attributes" class="text-caption text-medium-emphasis font-mono">
@@ -100,14 +98,17 @@
       <!-- Button to open the Add Rating dialog -->
       <v-btn color="primary" class="font-weight-bold" @click="openAddRating">Add Rating</v-btn>
 
-      <!-- Add/Edit Rating Dialog -->
-      <v-dialog v-model="showAddRatingDialog" max-width="500px">
+      <!-- View/Add/Edit Rating Dialog -->
+      <v-dialog v-model="showRatingDialog" max-width="500px" :persistent="isEditingRating">
         <v-card>
-          <v-card-title class="font-display text-h6 font-weight-bold">
-            {{ editingRatingId ? "Edit Rating" : "Add a New Rating" }}
+          <v-card-title class="d-flex align-center justify-space-between font-display text-h6 font-weight-bold">
+            <span>{{ ratingDialogTitle }}</span>
+            <v-btn icon size="small" variant="text" @click="closeRatingDialog">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
           </v-card-title>
           <v-card-text>
-            <v-form ref="ratingForm" v-model="valid">
+            <v-form v-if="isEditingRating" ref="ratingForm" v-model="valid">
               <v-rating
                 v-model="newRating.score"
                 color="glow"
@@ -129,12 +130,39 @@
                 clearable
               ></v-text-field>
             </v-form>
+            <div v-else>
+              <div class="d-flex align-center flex-wrap ga-2 mb-2">
+                <v-rating
+                  :model-value="newRating.score"
+                  readonly
+                  density="compact"
+                  color="glow"
+                ></v-rating>
+                <span class="text-caption text-medium-emphasis">
+                  {{ newRating.taster }}<template v-if="newRating.created_at"> &middot; {{ formatDate(newRating.created_at) }}</template>
+                </span>
+              </div>
+              <p v-if="newRating.comment" class="text-body-2" style="white-space: normal;">{{ newRating.comment }}</p>
+              <div class="text-caption text-medium-emphasis font-mono">
+                <span v-for="field in ratingAttributeFields" :key="field.key">
+                  <template v-if="newRating.attributes[field.key]">
+                    {{ field.label }}: {{ newRating.attributes[field.key] }}&nbsp;&nbsp;
+                  </template>
+                </span>
+              </div>
+            </div>
           </v-card-text>
           <v-card-actions>
-            <v-btn v-if="editingRatingId" color="error" variant="text" @click="confirmDeleteFromEdit">Delete</v-btn>
-            <v-spacer></v-spacer>
-            <v-btn variant="text" @click="showAddRatingDialog = false">Cancel</v-btn>
-            <v-btn color="primary" @click="submitRating">Submit</v-btn>
+            <template v-if="isEditingRating">
+              <v-btn v-if="editingRatingId" color="error" variant="text" @click="confirmDeleteFromEdit">Delete</v-btn>
+              <v-spacer></v-spacer>
+              <v-btn variant="text" @click="closeRatingDialog">Cancel</v-btn>
+              <v-btn color="primary" @click="submitRating">Submit</v-btn>
+            </template>
+            <template v-else>
+              <v-spacer></v-spacer>
+              <v-btn color="primary" @click="isEditingRating = true">Edit</v-btn>
+            </template>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -208,7 +236,8 @@
     },
     data() {
       return {
-        showAddRatingDialog: false,
+        showRatingDialog: false,
+        isEditingRating: false,
         showEditDialog: false,
         showDeleteRatingDialog: false,
         editingRatingId: null,
@@ -217,6 +246,8 @@
           score: null,
           comment: "",
           attributes: {},
+          taster: null,
+          created_at: null,
         },
         valid: false,
         newBarcode: "",
@@ -231,6 +262,10 @@
       ratingAttributeFields() {
         return BEVERAGE_TYPES[this.beverage.type]?.ratingAttributeFields || [];
       },
+      ratingDialogTitle() {
+        if (!this.isEditingRating) return "Rating";
+        return this.editingRatingId ? "Edit Rating" : "Add a New Rating";
+      },
     },
     methods: {
       typeLabel,
@@ -243,17 +278,26 @@
       },
       openAddRating() {
         this.editingRatingId = null;
-        this.newRating = { score: null, comment: "", attributes: {} };
-        this.showAddRatingDialog = true;
+        this.newRating = { score: null, comment: "", attributes: {}, taster: null, created_at: null };
+        this.isEditingRating = true;
+        this.showRatingDialog = true;
       },
-      openEditRating(rating) {
+      openRatingView(rating) {
         this.editingRatingId = rating.id;
         this.newRating = {
           score: rating.score,
           comment: rating.comment || "",
           attributes: { ...(rating.attributes || {}) },
+          taster: rating.taster,
+          created_at: rating.created_at,
         };
-        this.showAddRatingDialog = true;
+        this.isEditingRating = false;
+        this.showRatingDialog = true;
+      },
+      closeRatingDialog() {
+        this.showRatingDialog = false;
+        this.isEditingRating = false;
+        this.editingRatingId = null;
       },
       async submitRating() {
         if (!this.valid) {
@@ -267,16 +311,14 @@
             await axios.post(`/api/beverages/${this.beverage.id}/ratings`, this.newRating);
           }
           this.$emit("refresh-beverage"); // Emit an event to refresh the beverage details
-          this.showAddRatingDialog = false; // Close the dialog
-          this.editingRatingId = null;
-          this.newRating = { score: null, comment: "", attributes: {} }; // Reset the form
+          this.closeRatingDialog();
         } catch (error) {
           console.error("Error saving rating:", error);
         }
       },
       confirmDeleteFromEdit() {
         this.ratingToDelete = { id: this.editingRatingId };
-        this.showAddRatingDialog = false;
+        this.showRatingDialog = false;
         this.showDeleteRatingDialog = true;
       },
       async deleteRating() {

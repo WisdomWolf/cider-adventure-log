@@ -27,17 +27,22 @@
       <LoginView v-else-if="!currentUser" @logged-in="handleLoggedIn" />
       <v-container v-else>
         <div v-if="!selectedBeverage">
-          <v-tabs v-model="selectedType" color="primary" class="mb-4">
+          <v-tabs :model-value="selectedType" color="primary" class="mb-4" @update:model-value="onTabChange">
             <v-tab v-for="tab in typeTabs" :key="tab.value" :value="tab.value">{{ tab.label }}</v-tab>
           </v-tabs>
           <BeverageTable
             :beverages="beverages"
             :beverageBrands="beverageBrands"
             :beverageNames="beverageNames"
+            :show-type-column="!selectedType"
+            :initial-page="page"
+            :initial-items-per-page="itemsPerPage"
             @add-beverage="addBeverage"
-            @view-beverage="fetchBeverageDetails"
+            @view-beverage="viewBeverage"
             @delete-beverage="deleteBeverage"
             @refresh-beverages="fetchBeverages"
+            @update:page="onPageChange"
+            @update:items-per-page="onItemsPerPageChange"
           />
         </div>
         <!-- Beverage Details -->
@@ -46,7 +51,7 @@
           :beverage="selectedBeverage"
           :beverageBrands="beverageBrands"
           :beverageNames="beverageNames"
-          @go-back="selectedBeverage = null"
+          @go-back="goBack"
           @refresh-beverage="fetchBeverageDetails(selectedBeverage.id)"
         />
       </v-container>
@@ -79,6 +84,8 @@ export default {
     return {
       typeTabs: [{ value: null, label: "All" }, ...BEVERAGE_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.title }))],
       selectedType: null,
+      page: 1,
+      itemsPerPage: 10,
       beverages: [],
       beverageBrands: [],
       beverageNames: [],
@@ -100,11 +107,6 @@ export default {
       return this.$vuetify.theme.global.name === "cellarDark";
     },
   },
-  watch: {
-    selectedType() {
-      this.fetchBeverages();
-    },
-  },
   methods: {
     toggleTheme() {
       const next = this.isDark ? "cellarLight" : "cellarDark";
@@ -113,7 +115,7 @@ export default {
     },
     async handleLoggedIn(user) {
       this.currentUser = user;
-      this.fetchBeverages();
+      this.applyStateFromUrl();
     },
     async handleLogout() {
       try {
@@ -153,6 +155,56 @@ export default {
         console.error("Error fetching beverage details:", error);
       }
     },
+    onTabChange(newType) {
+      this.selectedType = newType;
+      this.page = 1;
+      this.fetchBeverages();
+      this.syncUrl();
+    },
+    onPageChange(newPage) {
+      this.page = newPage;
+      this.syncUrl();
+    },
+    onItemsPerPageChange(newVal) {
+      this.itemsPerPage = newVal;
+      this.syncUrl();
+    },
+    async viewBeverage(beverageId) {
+      await this.fetchBeverageDetails(beverageId);
+      this.syncUrl(true);
+    },
+    goBack() {
+      window.history.back();
+    },
+    syncUrl(push = false) {
+      const params = new URLSearchParams();
+      if (this.selectedType) params.set("type", this.selectedType);
+      if (this.page > 1) params.set("page", this.page);
+      if (this.itemsPerPage !== 10) params.set("perPage", this.itemsPerPage);
+      if (this.selectedBeverage) params.set("beverage", this.selectedBeverage.id);
+      const query = params.toString();
+      const url = window.location.pathname + (query ? `?${query}` : "");
+      if (push) {
+        window.history.pushState({}, "", url);
+      } else {
+        window.history.replaceState({}, "", url);
+      }
+    },
+    async applyStateFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      this.selectedType = params.get("type") || null;
+      this.page = parseInt(params.get("page"), 10) || 1;
+      this.itemsPerPage = parseInt(params.get("perPage"), 10) || 10;
+
+      await this.fetchBeverages();
+
+      const beverageId = params.get("beverage");
+      if (beverageId) {
+        await this.fetchBeverageDetails(Number(beverageId));
+      } else {
+        this.selectedBeverage = null;
+      }
+    },
     async addBeverage(formData) {
       try {
         await axios.post(`/api/beverages`, formData, {
@@ -184,6 +236,12 @@ export default {
       }
     });
 
+    window.addEventListener("popstate", () => {
+      if (this.currentUser) {
+        this.applyStateFromUrl();
+      }
+    });
+
     try {
       this.currentUser = await fetchCurrentUser();
     } catch (error) {
@@ -192,7 +250,7 @@ export default {
       this.authChecked = true;
     }
     if (this.currentUser) {
-      this.fetchBeverages();
+      this.applyStateFromUrl();
     }
   },
 };

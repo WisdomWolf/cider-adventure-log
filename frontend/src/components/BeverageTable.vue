@@ -39,12 +39,14 @@
         class="elevation-1"
         dense
         :custom-filter="customFilter"
+        v-model:page="page"
+        v-model:items-per-page="itemsPerPage"
       >
         <template v-slot:item="{ item }">
           <tr class="clickable-row" @click="selectBeverage(item)">
             <td>{{ item.brand }}</td>
             <td>{{ item.name }}</td>
-            <td>
+            <td v-if="showTypeColumn">
               <v-chip size="small" :color="item.type" variant="flat" class="font-mono text-uppercase" style="letter-spacing: 0.04em; font-size: 0.68rem;">
                 {{ typeLabel(item.type) }}
               </v-chip>
@@ -169,6 +171,18 @@ export default {
       type: Array,
       required: true,
     },
+    showTypeColumn: {
+      type: Boolean,
+      default: true,
+    },
+    initialPage: {
+      type: Number,
+      default: 1,
+    },
+    initialItemsPerPage: {
+      type: Number,
+      default: 10,
+    },
   },
   data() {
     return {
@@ -181,14 +195,39 @@ export default {
       isScanning: false,
       scannerError: null,
       lastResult: null,
-      headers: [
+      page: this.initialPage,
+      itemsPerPage: this.initialItemsPerPage,
+    };
+  },
+  computed: {
+    headers() {
+      const headers = [
         { title: "Brand", value: "brand", sortable: true },
         { title: "Name", value: "name", sortable: true },
-        { title: "Type", value: "type", sortable: true },
+      ];
+      if (this.showTypeColumn) {
+        headers.push({ title: "Type", value: "type", sortable: true });
+      }
+      headers.push(
         { title: "Avg. Rating", value: "average_rating", sortable: true },
         { title: "", value: "actions", sortable: false },
-      ],
-    };
+      );
+      return headers;
+    },
+  },
+  watch: {
+    initialPage(val) {
+      this.page = val;
+    },
+    initialItemsPerPage(val) {
+      this.itemsPerPage = val;
+    },
+    page(val) {
+      this.$emit("update:page", val);
+    },
+    itemsPerPage(val) {
+      this.$emit("update:items-per-page", val);
+    },
   },
   methods: {
     typeLabel,
