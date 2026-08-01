@@ -2,7 +2,7 @@
   <v-container>
     <v-card>
       <v-card-title>
-        Product Table
+        Beverages
         <v-spacer></v-spacer>
       </v-card-title>
       <v-card-text>
@@ -18,9 +18,9 @@
             variant="outlined"
             class="flex-grow-1"
           ></v-text-field>
-          <v-btn 
-            @click="openBarcodeScanner" 
-            class="ml-2" 
+          <v-btn
+            @click="openBarcodeScanner"
+            class="ml-2"
             color="primary"
             :disabled="isScanning"
           >
@@ -30,10 +30,10 @@
         </div>
       </v-card-text>
 
-      <!-- Product Table -->
+      <!-- Beverage Table -->
       <v-data-table
         :headers="headers"
-        :items="products"
+        :items="beverages"
         :search="search"
         item-value="id"
         class="elevation-1"
@@ -41,9 +41,10 @@
         :custom-filter="customFilter"
       >
         <template v-slot:item="{ item }">
-          <tr class="clickable-row" @click="selectProduct(item)">
+          <tr class="clickable-row" @click="selectBeverage(item)">
             <td>{{ item.brand }}</td>
-            <td>{{ item.flavor }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ typeLabel(item.type) }}</td>
             <td>
               <v-rating
                 v-if="item.average_rating"
@@ -87,23 +88,23 @@
       </v-card>
     </v-dialog>
 
-    <!-- Add Product Dialog -->
-    <v-dialog v-model="showAddProductDialog" max-width="600px">
+    <!-- Add Beverage Dialog -->
+    <v-dialog v-model="showAddBeverageDialog" max-width="600px">
       <v-card>
         <v-card-title>
-          <span class="text-h6">Add New Product</span>
+          <span class="text-h6">Add New Beverage</span>
         </v-card-title>
         <v-card-text>
-          <!-- Embed the ProductForm component -->
-          <ProductForm
-            :productBrands="productBrands"
-            :productFlavors="productFlavors"
-            @add-product="handleAddProduct"
+          <!-- Embed the BeverageForm component -->
+          <BeverageForm
+            :beverageBrands="beverageBrands"
+            :beverageNames="beverageNames"
+            @add-beverage="handleAddBeverage"
           />
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="showAddProductDialog = false">
+          <v-btn color="blue darken-1" text @click="showAddBeverageDialog = false">
             Close
           </v-btn>
         </v-card-actions>
@@ -115,11 +116,11 @@
       <v-card>
         <v-card-title class="text-h6">Confirm Deletion</v-card-title>
         <v-card-text>
-          Are you sure you want to delete this product? This action cannot be undone.
+          Are you sure you want to delete this beverage? This action cannot be undone.
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="red" text @click="deleteProduct">Delete</v-btn>
+          <v-btn color="red" text @click="deleteBeverage">Delete</v-btn>
           <v-btn color="blue darken-1" text @click="showDeleteDialog = false">
             Cancel
           </v-btn>
@@ -127,28 +128,29 @@
       </v-card>
     </v-dialog>
   </v-container>
-  <!-- Add New Product Button -->
-  <v-btn color="primary" @click="showAddProductDialog = true">
-    Add New Product
+  <!-- Add New Beverage Button -->
+  <v-btn color="primary" @click="showAddBeverageDialog = true">
+    Add New Beverage
   </v-btn>
 </template>
 
 <script>
-import ProductForm from "./ProductForm.vue";
+import BeverageForm from "./BeverageForm.vue";
 import Quagga from '@ericblade/quagga2';
+import { typeLabel } from "../beverageTypes";
 
 export default {
-  components: { ProductForm },
+  components: { BeverageForm },
   props: {
-    products: {
+    beverages: {
       type: Array,
       required: true,
     },
-    productBrands: {
+    beverageBrands: {
       type: Array,
       required: true,
     },
-    productFlavors: {
+    beverageNames: {
       type: Array,
       required: true,
     },
@@ -156,46 +158,43 @@ export default {
   data() {
     return {
       search: "",
-      showAddProductDialog: false,
+      showAddBeverageDialog: false,
       showDeleteDialog: false,
-      productToDelete: null,
+      beverageToDelete: null,
       showScanner: false,
       isScanning: false,
       scannerError: null,
       lastResult: null,
       headers: [
         { title: "Brand", value: "brand", sortable: true },
-        { title: "Flavor", value: "flavor", sortable: true },
+        { title: "Name", value: "name", sortable: true },
+        { title: "Type", value: "type", sortable: true },
         { title: "Avg. Rating", value: "average_rating", sortable: true },
         { title: "", value: "actions", sortable: false },
       ],
     };
   },
-  computed: {
-    filteredProducts() {
-      return this.products;
-    },
-  },
   methods: {
-    handleAddProduct(formData) {
-      this.$emit("add-product", formData);
-      this.showAddProductDialog = false;
+    typeLabel,
+    handleAddBeverage(formData) {
+      this.$emit("add-beverage", formData);
+      this.showAddBeverageDialog = false;
     },
-    selectProduct(product) {
-      if (product && product.id) {
-        this.$emit("view-product", product.id);
+    selectBeverage(beverage) {
+      if (beverage && beverage.id) {
+        this.$emit("view-beverage", beverage.id);
       } else {
-        console.error("Invalid product item:", product);
+        console.error("Invalid beverage item:", beverage);
       }
     },
-    confirmDelete(product) {
-      this.productToDelete = product;
+    confirmDelete(beverage) {
+      this.beverageToDelete = beverage;
       this.showDeleteDialog = true;
     },
-    deleteProduct() {
-      this.$emit("delete-product", this.productToDelete);
+    deleteBeverage() {
+      this.$emit("delete-beverage", this.beverageToDelete);
       this.showDeleteDialog = false;
-      this.productToDelete = null;
+      this.beverageToDelete = null;
     },
     customFilter(value, search, item) {
       if (!search) return true;
@@ -204,7 +203,7 @@ export default {
 
       const matchesDisplayedFields =
         item.raw.brand.toLowerCase().includes(searchLower) ||
-        item.raw.flavor.toLowerCase().includes(searchLower);
+        item.raw.name.toLowerCase().includes(searchLower);
 
       const matchesBarcode =
         item.raw.barcodes &&

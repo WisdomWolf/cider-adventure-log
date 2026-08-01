@@ -3,8 +3,8 @@
       <v-btn @click="$emit('go-back')" color="primary">Back</v-btn>
       <v-card>
         <v-img
-          v-if="product.image"
-          :src="'data:image/jpeg;base64,' + product.image"
+          v-if="beverage.image"
+          :src="'data:image/jpeg;base64,' + beverage.image"
           height="200px"
         ></v-img>
         <v-img
@@ -12,19 +12,25 @@
           height="200px"
           contain
         >
-          <img src="@/assets/cider-can.png" alt="Cider Can" style="width: 100%; height: 100%; object-fit: contain;" />
+          <img src="@/assets/cider-can.png" alt="Beverage" style="width: 100%; height: 100%; object-fit: contain;" />
         </v-img>
         <v-card-title>
-          {{ product.brand }} - {{ product.flavor }}
+          {{ beverage.brand }} - {{ beverage.name }}
+          <v-chip size="small" class="ml-2">{{ typeLabel(beverage.type) }}</v-chip>
           <v-spacer></v-spacer>
           <v-btn icon @click="showEditDialog = true">
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
         </v-card-title>
         <v-card-text>
-          <p>{{ product.description }}</p>
+          <p>{{ beverage.description }}</p>
+          <div v-if="detailFields.length">
+            <div v-for="field in detailFields" :key="field.key">
+              <strong>{{ field.label }}:</strong> {{ beverage.details?.[field.key] }}
+            </div>
+          </div>
           <v-rating
-            v-model="product.average_rating"
+            v-model="beverage.average_rating"
             readonly
             color="amber"
             background-color="grey lighten-1"
@@ -37,7 +43,7 @@
         column
       >
         <v-chip closable
-                v-for="(barcode, index) in product.barcodes"
+                v-for="(barcode, index) in beverage.barcodes"
                 :key="index"
                 close
                 @click:close="deleteBarcode(barcode)"
@@ -52,11 +58,11 @@
         @keyup.enter="addBarcode"
         ></v-text-field>
         <v-btn @click="addBarcode">Add</v-btn>
-  
+
       <v-list>
         <v-subheader>Ratings</v-subheader>
         <v-list-item
-          v-for="(rating, index) in product.ratings"
+          v-for="(rating, index) in beverage.ratings"
           :key="index"
         >
           <v-list-item-content>
@@ -69,13 +75,20 @@
               ></v-rating>
             </v-list-item-title>
             <v-list-item-subtitle>{{ rating.comment }}</v-list-item-subtitle>
+            <div v-if="rating.attributes" class="text-caption text-medium-emphasis">
+              <span v-for="field in ratingAttributeFields" :key="field.key">
+                <template v-if="rating.attributes[field.key]">
+                  {{ field.label }}: {{ rating.attributes[field.key] }}&nbsp;&nbsp;
+                </template>
+              </span>
+            </div>
           </v-list-item-content>
         </v-list-item>
       </v-list>
-  
+
       <!-- Button to open the Add Rating dialog -->
       <v-btn color="primary" @click="showAddRatingDialog = true">Add Rating</v-btn>
-  
+
       <!-- Add Rating Dialog -->
       <v-dialog v-model="showAddRatingDialog" max-width="500px">
         <v-card>
@@ -95,6 +108,14 @@
                 rows="3"
                 clearable
               ></v-textarea>
+              <v-text-field
+                v-for="field in ratingAttributeFields"
+                :key="field.key"
+                v-model="newRating.attributes[field.key]"
+                :label="field.label"
+                :type="field.type === 'number' ? 'number' : 'text'"
+                clearable
+              ></v-text-field>
             </v-form>
           </v-card-text>
           <v-card-actions>
@@ -105,18 +126,18 @@
       </v-dialog>
     </v-container>
 
-    <!-- Edit Product Dialog -->
+    <!-- Edit Beverage Dialog -->
     <v-dialog v-model="showEditDialog" max-width="600px">
       <v-card>
         <v-card-title>
-          <span class="text-h6">Edit Product</span>
+          <span class="text-h6">Edit Beverage</span>
         </v-card-title>
         <v-card-text>
-          <ProductForm
-            :productBrands="productBrands"
-            :productFlavors="productFlavors"
-            :initialProduct="product"
-            @add-product="handleEditProduct"
+          <BeverageForm
+            :beverageBrands="beverageBrands"
+            :beverageNames="beverageNames"
+            :initialBeverage="beverage"
+            @add-beverage="handleEditBeverage"
           />
         </v-card-text>
         <v-card-actions>
@@ -132,25 +153,26 @@
       {{ errorMessage }}
     </v-snackbar>
   </template>
-  
+
   <script>
   import axios from "@/axios";
-  import ProductForm from "./ProductForm.vue";
+  import BeverageForm from "./BeverageForm.vue";
+  import { BEVERAGE_TYPES, typeLabel } from "../beverageTypes";
 
   export default {
     components: {
-      ProductForm
+      BeverageForm
     },
     props: {
-      product: {
+      beverage: {
         type: Object,
         required: true,
       },
-      productBrands: {
+      beverageBrands: {
         type: Array,
         required: true,
       },
-      productFlavors: {
+      beverageNames: {
         type: Array,
         required: true,
       },
@@ -162,6 +184,7 @@
         newRating: {
           score: null,
           comment: "",
+          attributes: {},
         },
         valid: false,
         newBarcode: "",
@@ -169,17 +192,26 @@
         errorMessage: "",
       };
     },
+    computed: {
+      detailFields() {
+        return BEVERAGE_TYPES[this.beverage.type]?.detailFields || [];
+      },
+      ratingAttributeFields() {
+        return BEVERAGE_TYPES[this.beverage.type]?.ratingAttributeFields || [];
+      },
+    },
     methods: {
+      typeLabel,
       async addRating() {
         if (!this.valid) {
           return;
         }
-  
+
         try {
-          await axios.post(`/api/products/${this.product.id}/ratings`, this.newRating);
-          this.$emit("refresh-product"); // Emit an event to refresh the product details
+          await axios.post(`/api/beverages/${this.beverage.id}/ratings`, this.newRating);
+          this.$emit("refresh-beverage"); // Emit an event to refresh the beverage details
           this.showAddRatingDialog = false; // Close the dialog
-          this.newRating = { score: null, comment: "" }; // Reset the form
+          this.newRating = { score: null, comment: "", attributes: {} }; // Reset the form
         } catch (error) {
           console.error("Error adding rating:", error);
         }
@@ -188,10 +220,10 @@
         if (!this.newBarcode.trim()) return;
 
         try {
-          const response = await axios.post(`/api/products/${this.product.id}/barcodes`, {
+          const response = await axios.post(`/api/beverages/${this.beverage.id}/barcodes`, {
             code: this.newBarcode,
           });
-          this.product.barcodes.push(response.data);
+          this.beverage.barcodes.push(response.data);
           this.newBarcode = '';
         } catch (error) {
           if (error.response && error.response.data.error) {
@@ -204,28 +236,27 @@
     },
     async deleteBarcode(barcode) {
       try {
-        const barcodeId = this.product.barcodes.find((b) => b === barcode).id;
+        const barcodeId = this.beverage.barcodes.find((b) => b === barcode).id;
         await axios.delete(`/api/barcodes/${barcodeId}`);
-        this.product.barcodes = this.product.barcodes.filter((b) => b !== barcode);
+        this.beverage.barcodes = this.beverage.barcodes.filter((b) => b !== barcode);
       } catch (error) {
         console.error('Error deleting barcode:', error);
       }
     },
-    async handleEditProduct(formData) {
+    async handleEditBeverage(formData) {
       try {
-        await axios.put(`/api/products/${this.product.id}`, formData, {
+        await axios.put(`/api/beverages/${this.beverage.id}`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
-        this.$emit("refresh-product");
+        this.$emit("refresh-beverage");
         this.showEditDialog = false;
       } catch (error) {
-        this.errorMessage = "Error updating product: " + (error.response?.data?.message || error.message);
+        this.errorMessage = "Error updating beverage: " + (error.response?.data?.message || error.message);
         this.errorSnackbar = true;
       }
     },
     },
   };
   </script>
-  

@@ -51,13 +51,13 @@ spec:
                   key: AUTHENTIK_CLIENT_SECRET
           livenessProbe:
             httpGet:
-              path: /api/products
+              path: /api/beverages
               port: 5000
             initialDelaySeconds: 10
             periodSeconds: 30
           readinessProbe:
             httpGet:
-              path: /api/products
+              path: /api/beverages
               port: 5000
             initialDelaySeconds: 5
             periodSeconds: 10

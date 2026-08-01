@@ -10,24 +10,27 @@
         <span class="text-body-2 mr-2">{{ currentUser.display_name || currentUser.email }}</span>
         <v-btn size="small" variant="text" @click="handleLogout">Log out</v-btn>
       </div>
-      <div v-if="!selectedProduct">
-        <ProductTable
-          :products="products"
-          :productBrands="productBrands"
-          :productFlavors="productFlavors"
-          @add-product="addProduct"
-          @view-product="fetchProductDetails"
-          @delete-product="deleteProduct"
+      <div v-if="!selectedBeverage">
+        <v-tabs v-model="selectedType">
+          <v-tab v-for="tab in typeTabs" :key="tab.value" :value="tab.value">{{ tab.label }}</v-tab>
+        </v-tabs>
+        <BeverageTable
+          :beverages="beverages"
+          :beverageBrands="beverageBrands"
+          :beverageNames="beverageNames"
+          @add-beverage="addBeverage"
+          @view-beverage="fetchBeverageDetails"
+          @delete-beverage="deleteBeverage"
         />
       </div>
-      <!-- Product Details -->
-      <ProductDetails
+      <!-- Beverage Details -->
+      <BeverageDetails
         v-else
-        :product="selectedProduct"
-        :productBrands="productBrands"
-        :productFlavors="productFlavors"
-        @go-back="selectedProduct = null"
-        @refresh-product="fetchProductDetails(selectedProduct.id)"
+        :beverage="selectedBeverage"
+        :beverageBrands="beverageBrands"
+        :beverageNames="beverageNames"
+        @go-back="selectedBeverage = null"
+        @refresh-beverage="fetchBeverageDetails(selectedBeverage.id)"
       />
     </v-container>
     <v-footer app class="justify-center text-caption text-medium-emphasis">
@@ -37,31 +40,29 @@
 </template>
 
 <script>
-import ProductTable from "./components/ProductTable.vue";
-import ProductDetails from "./components/ProductDetails.vue";
-import ProductForm from "./components/ProductForm.vue";
+import BeverageTable from "./components/BeverageTable.vue";
+import BeverageDetails from "./components/BeverageDetails.vue";
+import BeverageForm from "./components/BeverageForm.vue";
 import LoginView from "./components/LoginView.vue";
 import axios from "./axios";
 import { fetchCurrentUser, logout } from "./services/auth";
+import { BEVERAGE_TYPE_OPTIONS } from "./beverageTypes";
 
 export default {
   components: {
-    ProductTable,
-    ProductDetails,
-    ProductForm,
+    BeverageTable,
+    BeverageDetails,
+    BeverageForm,
     LoginView,
   },
   data() {
     return {
-      headers: [
-        { text: "Brand", value: "brand" },
-        { text: "Flavor", value: "flavor" },
-        { text: "Average Rating", value: "average_rating" },
-      ],
-      products: [],
-      productBrands: [],
-      productFlavors: [],
-      selectedProduct: null,
+      typeTabs: [{ value: null, label: "All" }, ...BEVERAGE_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.title }))],
+      selectedType: null,
+      beverages: [],
+      beverageBrands: [],
+      beverageNames: [],
+      selectedBeverage: null,
       authChecked: false,
       currentUser: null,
       buildDate: new Date(__BUILD_TIME__).toLocaleString('en-US', {
@@ -74,10 +75,15 @@ export default {
       }),
     };
   },
+  watch: {
+    selectedType() {
+      this.fetchBeverages();
+    },
+  },
   methods: {
     async handleLoggedIn(user) {
       this.currentUser = user;
-      this.fetchProducts();
+      this.fetchBeverages();
     },
     async handleLogout() {
       try {
@@ -86,54 +92,55 @@ export default {
         console.error("Error logging out:", error);
       }
       this.currentUser = null;
-      this.selectedProduct = null;
+      this.selectedBeverage = null;
     },
-    async fetchProducts() {
+    async fetchBeverages() {
       try {
-        const response = await axios.get(`/api/products`);
-        const productsData = response.data;
+        const params = this.selectedType ? { type: this.selectedType } : {};
+        const response = await axios.get(`/api/beverages`, { params });
+        const beveragesData = response.data;
 
         // Populate dropdown options with unique values
-        this.productBrands = [...new Set(productsData.map((p) => p.brand))];
-        this.productFlavors = [...new Set(productsData.map((p) => p.flavor))];
+        this.beverageBrands = [...new Set(beveragesData.map((b) => b.brand))];
+        this.beverageNames = [...new Set(beveragesData.map((b) => b.name))];
 
-        // Update the products array
-        this.products = productsData;
+        // Update the beverages array
+        this.beverages = beveragesData;
       } catch (error) {
-        console.error("Error fetching products:", error);
+        console.error("Error fetching beverages:", error);
       }
     },
-    async fetchProductDetails(productId) {
-      if (!productId) {
-        console.error("Invalid product ID:", productId);
+    async fetchBeverageDetails(beverageId) {
+      if (!beverageId) {
+        console.error("Invalid beverage ID:", beverageId);
         return;
       }
 
       try {
-        const response = await axios.get(`/api/products/${productId}`);
-        this.selectedProduct = response.data;
+        const response = await axios.get(`/api/beverages/${beverageId}`);
+        this.selectedBeverage = response.data;
       } catch (error) {
-        console.error("Error fetching product details:", error);
+        console.error("Error fetching beverage details:", error);
       }
     },
-    async addProduct(formData) {
+    async addBeverage(formData) {
       try {
-        await axios.post(`/api/products`, formData, {
+        await axios.post(`/api/beverages`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
-        this.fetchProducts(); // Refresh the product list after adding a new product
+        this.fetchBeverages(); // Refresh the beverage list after adding a new beverage
       } catch (error) {
-        console.error("Error adding product:", error);
+        console.error("Error adding beverage:", error);
       }
     },
-    async deleteProduct(product) {
+    async deleteBeverage(beverage) {
       try {
-        await axios.delete(`/api/products/${product.id}`);
-        this.fetchProducts(); // Refresh the product list after deletion
+        await axios.delete(`/api/beverages/${beverage.id}`);
+        this.fetchBeverages(); // Refresh the beverage list after deletion
       } catch (error) {
-        console.error("Error deleting product:", error);
+        console.error("Error deleting beverage:", error);
       }
     },
   },
@@ -147,7 +154,7 @@ export default {
       this.authChecked = true;
     }
     if (this.currentUser) {
-      this.fetchProducts();
+      this.fetchBeverages();
     }
   },
 };
