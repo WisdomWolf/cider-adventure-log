@@ -16,9 +16,14 @@
         >
           <v-icon>{{ isDark ? "mdi-weather-sunny" : "mdi-weather-night" }}</v-icon>
         </v-btn>
+        <v-btn icon variant="text" size="small" title="Settings" @click="showSettings = true">
+          <v-icon>mdi-cog</v-icon>
+        </v-btn>
         <v-btn size="small" variant="text" @click="handleLogout">Log out</v-btn>
       </v-container>
     </v-app-bar>
+
+    <SettingsPanel v-model="showSettings" />
 
     <v-main>
       <v-container v-if="!authChecked">
@@ -68,10 +73,11 @@ import BeverageTable from "./components/BeverageTable.vue";
 import BeverageDetails from "./components/BeverageDetails.vue";
 import BeverageForm from "./components/BeverageForm.vue";
 import LoginView from "./components/LoginView.vue";
+import SettingsPanel from "./components/SettingsPanel.vue";
 import axios from "./axios";
 import { fetchCurrentUser, logout } from "./services/auth";
 import { BEVERAGE_TYPE_OPTIONS } from "./beverageTypes";
-import { getStoredTheme, setStoredTheme } from "./theme";
+import { getStoredTheme, setStoredTheme, themeNameFor, familyFromThemeName, isDarkThemeName } from "./theme";
 
 export default {
   components: {
@@ -79,6 +85,7 @@ export default {
     BeverageDetails,
     BeverageForm,
     LoginView,
+    SettingsPanel,
   },
   data() {
     return {
@@ -92,6 +99,7 @@ export default {
       selectedBeverage: null,
       authChecked: false,
       currentUser: null,
+      showSettings: false,
       buildDate: new Date(__BUILD_TIME__).toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
@@ -104,12 +112,13 @@ export default {
   },
   computed: {
     isDark() {
-      return this.$vuetify.theme.global.name === "cellarDark";
+      return isDarkThemeName(this.$vuetify.theme.global.name);
     },
   },
   methods: {
     toggleTheme() {
-      const next = this.isDark ? "cellarLight" : "cellarDark";
+      const family = familyFromThemeName(this.$vuetify.theme.global.name);
+      const next = themeNameFor(family, !this.isDark);
       this.$vuetify.theme.global.name = next;
       setStoredTheme(next);
     },
@@ -232,7 +241,7 @@ export default {
     // Follow the system preference live until the user manually picks a theme.
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
       if (!getStoredTheme()) {
-        this.$vuetify.theme.global.name = e.matches ? "cellarDark" : "cellarLight";
+        this.$vuetify.theme.global.name = themeNameFor("cellar", e.matches);
       }
     });
 

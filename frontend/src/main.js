@@ -9,7 +9,12 @@ import * as directives from 'vuetify/directives'
 
 import './assets/fonts.css'
 import App from './App.vue'
-import { cellarDark, cellarLight, initialTheme } from './theme'
+import {
+  cellarDark, cellarLight,
+  ledgerDark, ledgerLight,
+  tastingNotesDark, tastingNotesLight,
+  initialTheme,
+} from './theme'
 
 const vuetify = createVuetify({
   components,
@@ -17,8 +22,12 @@ const vuetify = createVuetify({
   theme: {
     defaultTheme: initialTheme(),
     themes: {
+      tastingNotesLight,
+      tastingNotesDark,
       cellarLight,
       cellarDark,
+      ledgerLight,
+      ledgerDark,
     },
   },
   defaults: {
