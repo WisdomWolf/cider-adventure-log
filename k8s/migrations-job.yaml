@@ -13,7 +13,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: migrate
-          image: ghcr.io/wisdomwolf/cider-adventure-log-api:sha-86dc1a8
+          image: ghcr.io/wisdomwolf/cider-adventure-log-api:sha-23d72a9
           command: ["flask", "db", "upgrade"]
           env:
             - name: APP_ENV
