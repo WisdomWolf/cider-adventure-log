@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/wisdomwolf/cider-adventure-log-frontend:sha-23d72a9
+          image: ghcr.io/wisdomwolf/cider-adventure-log-frontend:sha-22c43af
           ports:
             - containerPort: 80
           resources:

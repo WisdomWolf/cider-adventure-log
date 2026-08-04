@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: ghcr.io/wisdomwolf/cider-adventure-log-api:sha-23d72a9
+          image: ghcr.io/wisdomwolf/cider-adventure-log-api:sha-22c43af
           ports:
             - containerPort: 5000
           env:
