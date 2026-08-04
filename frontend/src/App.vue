@@ -42,12 +42,14 @@
             :show-type-column="!selectedType"
             :initial-page="page"
             :initial-items-per-page="itemsPerPage"
+            :initial-sort-by="sortBy"
             @add-beverage="addBeverage"
             @view-beverage="viewBeverage"
             @delete-beverage="deleteBeverage"
             @refresh-beverages="fetchBeverages"
             @update:page="onPageChange"
             @update:items-per-page="onItemsPerPageChange"
+            @update:sort-by="onSortByChange"
           />
         </div>
         <!-- Beverage Details -->
@@ -93,6 +95,7 @@ export default {
       selectedType: null,
       page: 1,
       itemsPerPage: 10,
+      sortBy: [],
       beverages: [],
       beverageBrands: [],
       beverageNames: [],
@@ -123,8 +126,8 @@ export default {
       setStoredTheme(next);
     },
     async handleLoggedIn(user) {
+      await this.applyStateFromUrl();
       this.currentUser = user;
-      this.applyStateFromUrl();
     },
     async handleLogout() {
       try {
@@ -178,6 +181,10 @@ export default {
       this.itemsPerPage = newVal;
       this.syncUrl();
     },
+    onSortByChange(newVal) {
+      this.sortBy = newVal;
+      this.syncUrl();
+    },
     async viewBeverage(beverageId) {
       await this.fetchBeverageDetails(beverageId);
       this.syncUrl(true);
@@ -190,6 +197,10 @@ export default {
       if (this.selectedType) params.set("type", this.selectedType);
       if (this.page > 1) params.set("page", this.page);
       if (this.itemsPerPage !== 10) params.set("perPage", this.itemsPerPage);
+      if (this.sortBy && this.sortBy.length) {
+        const { key, order } = this.sortBy[0];
+        params.set("sort", `${key}:${order}`);
+      }
       if (this.selectedBeverage) params.set("beverage", this.selectedBeverage.id);
       const query = params.toString();
       const url = window.location.pathname + (query ? `?${query}` : "");
@@ -204,6 +215,14 @@ export default {
       this.selectedType = params.get("type") || null;
       this.page = parseInt(params.get("page"), 10) || 1;
       this.itemsPerPage = parseInt(params.get("perPage"), 10) || 10;
+
+      const sortParam = params.get("sort");
+      if (sortParam) {
+        const [key, order] = sortParam.split(":");
+        this.sortBy = key ? [{ key, order: order || "asc" }] : [];
+      } else {
+        this.sortBy = [];
+      }
 
       await this.fetchBeverages();
 
@@ -253,13 +272,15 @@ export default {
 
     try {
       this.currentUser = await fetchCurrentUser();
+      if (this.currentUser) {
+        // Restore list state (page/sort/etc.) before BeverageTable mounts, so it
+        // doesn't briefly mount with an empty beverage list and clamp the page.
+        await this.applyStateFromUrl();
+      }
     } catch (error) {
       console.error("Error checking auth state:", error);
     } finally {
       this.authChecked = true;
-    }
-    if (this.currentUser) {
-      this.applyStateFromUrl();
     }
   },
 };

@@ -41,6 +41,7 @@
         :custom-filter="customFilter"
         v-model:page="page"
         v-model:items-per-page="itemsPerPage"
+        v-model:sort-by="sortBy"
       >
         <template v-slot:item="{ item }">
           <tr class="clickable-row" @click="selectBeverage(item)">
@@ -183,6 +184,10 @@ export default {
       type: Number,
       default: 10,
     },
+    initialSortBy: {
+      type: Array,
+      default: () => [],
+    },
   },
   data() {
     return {
@@ -197,6 +202,10 @@ export default {
       lastResult: null,
       page: this.initialPage,
       itemsPerPage: this.initialItemsPerPage,
+      sortBy: this.initialSortBy,
+      // v-data-table can reset its internal page to 1 while settling sortBy/items on
+      // initial mount; reassert the restored page afterward against this frozen snapshot.
+      restoredPage: this.initialPage,
     };
   },
   computed: {
@@ -222,11 +231,17 @@ export default {
     initialItemsPerPage(val) {
       this.itemsPerPage = val;
     },
+    initialSortBy(val) {
+      this.sortBy = val;
+    },
     page(val) {
       this.$emit("update:page", val);
     },
     itemsPerPage(val) {
       this.$emit("update:items-per-page", val);
+    },
+    sortBy(val) {
+      this.$emit("update:sort-by", val);
     },
   },
   methods: {
@@ -367,6 +382,16 @@ export default {
         }
       });
     }
+  },
+  mounted() {
+    // v-data-table can clamp its internal page back to 1 while it settles
+    // pagination/sorting against the freshly-mounted items list. Reassert the
+    // restored page once that settling is done.
+    this.$nextTick(() => {
+      if (this.page !== this.restoredPage) {
+        this.page = this.restoredPage;
+      }
+    });
   },
   beforeUnmount() {
     if (Quagga) {
