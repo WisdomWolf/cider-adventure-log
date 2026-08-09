@@ -146,6 +146,7 @@ class CoffeeDetails(Beverage):
     roast_level: Mapped[Optional[str]]
     process: Mapped[Optional[str]]
     varietal: Mapped[Optional[str]]
+    tasting_notes: Mapped[Optional[str]]
 
     __mapper_args__ = {"polymorphic_identity": "coffee"}
 
@@ -155,6 +156,7 @@ class CoffeeDetails(Beverage):
             "roast_level": self.roast_level,
             "process": self.process,
             "varietal": self.varietal,
+            "tasting_notes": self.tasting_notes,
         }
 
 

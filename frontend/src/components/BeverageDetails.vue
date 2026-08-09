@@ -25,11 +25,11 @@
           </v-btn>
         </v-card-title>
         <v-card-text>
-          <p class="text-body-1">{{ beverage.description }}</p>
-          <div v-if="detailFields.length" class="mb-3">
-            <div v-for="field in detailFields" :key="field.key" class="text-body-2">
+          <p v-if="beverage.description" class="text-body-1">{{ beverage.description }}</p>
+          <div v-if="visibleDetailFields.length" class="mb-3">
+            <div v-for="field in visibleDetailFields" :key="field.key" class="text-body-2">
               <span class="text-medium-emphasis">{{ field.label }}:</span>
-              <span class="font-mono font-weight-bold">{{ beverage.details?.[field.key] }}</span>
+              <span class="font-mono font-weight-bold" style="white-space: pre-line;">{{ beverage.details?.[field.key] }}</span>
             </div>
           </div>
           <v-rating
@@ -60,8 +60,18 @@
         variant="outlined"
         density="compact"
         @keyup.enter="addBarcode"
-        ></v-text-field>
-        <v-btn color="primary" variant="tonal" @click="addBarcode">Add</v-btn>
+        >
+          <template #append-inner>
+            <v-btn
+              v-if="newBarcode.length >= 6"
+              icon="mdi-plus"
+              size="x-small"
+              color="primary"
+              variant="tonal"
+              @click="addBarcode"
+            ></v-btn>
+          </template>
+        </v-text-field>
 
       <p class="font-display text-h6 font-weight-bold mt-4 mb-2">Ratings</p>
       <div class="d-flex flex-column ga-3 mb-4">
@@ -115,6 +125,11 @@
                 label="Rating Score"
                 required
               ></v-rating>
+              <v-text-field
+                v-model="newRating.created_at"
+                label="Date &amp; Time"
+                type="datetime-local"
+              ></v-text-field>
               <v-textarea
                 v-model="newRating.comment"
                 label="Comment"
@@ -126,7 +141,7 @@
                 :key="field.key"
                 v-model="newRating.attributes[field.key]"
                 :label="field.label"
-                :type="field.type === 'number' ? 'number' : 'text'"
+                :type="fieldInputType(field)"
                 clearable
               ></v-text-field>
             </v-form>
@@ -259,6 +274,9 @@
       detailFields() {
         return BEVERAGE_TYPES[this.beverage.type]?.detailFields || [];
       },
+      visibleDetailFields() {
+        return this.detailFields.filter((field) => this.hasValue(this.beverage.details?.[field.key]));
+      },
       ratingAttributeFields() {
         return BEVERAGE_TYPES[this.beverage.type]?.ratingAttributeFields || [];
       },
@@ -269,6 +287,14 @@
     },
     methods: {
       typeLabel,
+      hasValue(value) {
+        return value !== null && value !== undefined && value !== "";
+      },
+      fieldInputType(field) {
+        if (field.type === "number") return "number";
+        if (field.type === "date") return "date";
+        return "text";
+      },
       formatDate(isoString) {
         return new Date(isoString).toLocaleDateString(undefined, {
           year: "numeric",
@@ -276,11 +302,51 @@
           day: "numeric",
         });
       },
+      nowLocalDatetime() {
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      },
+      lastRoastDateForBeverage() {
+        const withRoastDate = (this.beverage.ratings || [])
+          .filter((r) => r.attributes?.roast_date)
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        return withRoastDate.length ? withRoastDate[0].attributes.roast_date : null;
+      },
+      async defaultCoffeeAttributes() {
+        const attributes = {};
+        try {
+          const { data } = await axios.get("/api/ratings/last-attributes", {
+            params: { type: "coffee" },
+          });
+          for (const key of ["grind_size", "brew_method", "water_ratio", "water_temp_c"]) {
+            if (data?.[key] !== undefined && data[key] !== null) {
+              attributes[key] = data[key];
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching last coffee rating attributes:", error);
+        }
+        const roastDate = this.lastRoastDateForBeverage();
+        if (roastDate) {
+          attributes.roast_date = roastDate;
+        }
+        return attributes;
+      },
       openAddRating() {
         this.editingRatingId = null;
-        this.newRating = { score: null, comment: "", attributes: {}, taster: null, created_at: null };
+        this.newRating = { score: null, comment: "", attributes: {}, taster: null, created_at: this.nowLocalDatetime() };
         this.isEditingRating = true;
         this.showRatingDialog = true;
+
+        if (this.beverage.type === "coffee") {
+          // Populate defaults once fetched rather than blocking the dialog open.
+          this.defaultCoffeeAttributes().then((attributes) => {
+            if (this.isEditingRating && !this.editingRatingId) {
+              this.newRating.attributes = { ...attributes, ...this.newRating.attributes };
+            }
+          });
+        }
       },
       openRatingView(rating) {
         this.editingRatingId = rating.id;
@@ -289,7 +355,7 @@
           comment: rating.comment || "",
           attributes: { ...(rating.attributes || {}) },
           taster: rating.taster,
-          created_at: rating.created_at,
+          created_at: rating.created_at ? rating.created_at.slice(0, 16) : this.nowLocalDatetime(),
         };
         this.isEditingRating = false;
         this.showRatingDialog = true;

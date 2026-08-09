@@ -30,12 +30,14 @@ export const BEVERAGE_TYPES = {
       { key: "roast_level", label: "Roast Level", type: "text" },
       { key: "process", label: "Process", type: "text" },
       { key: "varietal", label: "Varietal", type: "text" },
+      { key: "tasting_notes", label: "Tasting Notes", type: "textarea" },
     ],
     ratingAttributeFields: [
       { key: "grind_size", label: "Grind Size", type: "text" },
       { key: "brew_method", label: "Brew Method", type: "text" },
       { key: "water_ratio", label: "Water Ratio", type: "text" },
       { key: "water_temp_c", label: "Water Temp (°C)", type: "number" },
+      { key: "roast_date", label: "Roast Date", type: "date" },
     ],
   },
 };

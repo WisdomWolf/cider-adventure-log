@@ -40,6 +40,7 @@
             :beverageBrands="beverageBrands"
             :beverageNames="beverageNames"
             :show-type-column="!selectedType"
+            :selected-type="selectedType"
             :initial-page="page"
             :initial-items-per-page="itemsPerPage"
             :initial-sort-by="sortBy"

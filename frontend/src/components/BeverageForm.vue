@@ -36,14 +36,22 @@
     </v-combobox>
 
     <!-- Type-specific detail fields -->
-    <v-text-field
-      v-for="field in detailFields"
-      :key="field.key"
-      v-model="newBeverage.details[field.key]"
-      :label="field.label"
-      :type="field.type === 'number' ? 'number' : 'text'"
-      clearable
-    ></v-text-field>
+    <template v-for="field in detailFields" :key="field.key">
+      <v-textarea
+        v-if="field.type === 'textarea'"
+        v-model="newBeverage.details[field.key]"
+        :label="field.label"
+        rows="3"
+        clearable
+      ></v-textarea>
+      <v-text-field
+        v-else
+        v-model="newBeverage.details[field.key]"
+        :label="field.label"
+        :type="field.type === 'number' ? 'number' : 'text'"
+        clearable
+      ></v-text-field>
+    </template>
 
     <!-- Barcode Text Field -->
     <v-text-field
@@ -109,6 +117,10 @@
         type: Object,
         default: null,
       },
+      defaultType: {
+        type: String,
+        default: null,
+      },
     },
     data() {
       const details = {};
@@ -118,7 +130,7 @@
       return {
         typeOptions: BEVERAGE_TYPE_OPTIONS,
         newBeverage: {
-          type: this.initialBeverage?.type || "cider",
+          type: this.initialBeverage?.type || this.defaultType || "cider",
           brand: this.initialBeverage?.brand || "",
           name: this.initialBeverage?.name || "",
           barcode: this.initialBeverage?.barcode || "",
@@ -133,6 +145,15 @@
     computed: {
       detailFields() {
         return BEVERAGE_TYPES[this.newBeverage.type]?.detailFields || [];
+      },
+    },
+    watch: {
+      // The form can stay mounted across dialog open/close cycles, so if the
+      // active tab changes between opens, re-sync the default for a fresh add.
+      defaultType(newType) {
+        if (!this.initialBeverage) {
+          this.newBeverage.type = newType || "cider";
+        }
       },
     },
     methods: {
@@ -165,7 +186,7 @@
 
         // Reset the form after submission
         this.newBeverage = {
-          type: "cider",
+          type: this.defaultType || "cider",
           brand: "",
           name: "",
           barcode: "",

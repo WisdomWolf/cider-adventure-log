@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 from sqlalchemy import inspect as sa_inspect
@@ -7,6 +9,23 @@ from .extensions import db
 from .models import BEVERAGE_TYPES, Barcode, Beverage, Rating
 
 main_bp = Blueprint('main', __name__)
+
+
+class InvalidCreatedAt(ValueError):
+    pass
+
+
+def _parse_created_at(data):
+    """Parses an optional client-supplied `created_at` (a naive
+    'YYYY-MM-DDTHH:MM' or ISO datetime string, no timezone) so reviews can be
+    backdated. Returns None if the field wasn't supplied."""
+    raw = data.get('created_at')
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(raw)
+    except ValueError:
+        raise InvalidCreatedAt(f"Invalid created_at timestamp: {raw!r}")
 
 
 def _type_field_types(model_class) -> dict:
@@ -44,6 +63,25 @@ def get_beverage_details(beverage_id):
         return jsonify({"message": "Beverage not found"}), 404
 
     return jsonify(beverage.to_detail_dict())
+
+
+@main_bp.route('/api/ratings/last-attributes', methods=['GET'])
+@login_required
+def last_rating_attributes():
+    """Latest rating's attributes for a given beverage type, used to default
+    fields (e.g. coffee grind size/brew method) to whatever was last used,
+    regardless of which beverage it was for."""
+    beverage_type = request.args.get('type')
+    if not beverage_type:
+        return jsonify({"message": "Missing required 'type' query param."}), 400
+
+    rating = (
+        Rating.query.join(Beverage, Rating.beverage_id == Beverage.id)
+        .filter(Beverage.type == beverage_type)
+        .order_by(Rating.created_at.desc(), Rating.id.desc())
+        .first()
+    )
+    return jsonify(rating.attributes if rating and rating.attributes else {})
 
 
 @main_bp.route('/api/beverages', methods=['GET'])
@@ -117,12 +155,18 @@ def add_rating(beverage_id):
     if not score or not (1 <= score <= 5):
         return jsonify({"message": "Invalid rating score. Must be between 1 and 5."}), 400
 
+    try:
+        created_at = _parse_created_at(data)
+    except InvalidCreatedAt as e:
+        return jsonify({"message": str(e)}), 400
+
     rating = Rating(
         score=score,
         comment=comment,
         beverage_id=beverage_id,
         user_id=current_user.id,
         attributes=attributes,
+        **({"created_at": created_at} if created_at else {}),
     )
     db.session.add(rating)
     db.session.commit()
@@ -140,9 +184,16 @@ def update_rating(rating_id):
     if not score or not (1 <= score <= 5):
         return jsonify({"message": "Invalid rating score. Must be between 1 and 5."}), 400
 
+    try:
+        created_at = _parse_created_at(data)
+    except InvalidCreatedAt as e:
+        return jsonify({"message": str(e)}), 400
+
     rating.score = score
     rating.comment = data.get('comment', '')
     rating.attributes = data.get('attributes') or None
+    if created_at:
+        rating.created_at = created_at
     db.session.commit()
 
     return jsonify({"message": "Rating updated successfully!"}), 200

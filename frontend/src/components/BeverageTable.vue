@@ -108,6 +108,7 @@
           <BeverageForm
             :beverageBrands="beverageBrands"
             :beverageNames="beverageNames"
+            :defaultType="selectedType"
             @add-beverage="handleAddBeverage"
           />
         </v-card-text>
@@ -175,6 +176,10 @@ export default {
     showTypeColumn: {
       type: Boolean,
       default: true,
+    },
+    selectedType: {
+      type: String,
+      default: null,
     },
     initialPage: {
       type: Number,
