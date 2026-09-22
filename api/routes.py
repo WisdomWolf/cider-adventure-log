@@ -11,6 +11,15 @@ from .models import BEVERAGE_TYPES, Barcode, Beverage, Rating
 main_bp = Blueprint('main', __name__)
 
 
+@main_bp.route('/api/health', methods=['GET'])
+def health():
+    """Liveness check: process is up. Deliberately does not touch the
+    database, so DB latency or a brief outage never causes the kubelet to
+    kill and restart this container. Readiness (/api/beverages) is what
+    reflects whether the app can actually serve requests."""
+    return jsonify({"status": "ok"}), 200
+
+
 class InvalidCreatedAt(ValueError):
     pass
 

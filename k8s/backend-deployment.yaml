@@ -49,24 +49,43 @@ spec:
                 secretKeyRef:
                   name: cask-and-cup-secrets
                   key: AUTHENTIK_CLIENT_SECRET
+          # Gates liveness/readiness until the app has actually come up, instead of
+          # guessing an initialDelaySeconds -- the previous fixed 10s delay was too
+          # short once the CPU limit below was throttling gunicorn's 4-worker boot.
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            periodSeconds: 5
+            failureThreshold: 12 # up to 60s to come up
+            timeoutSeconds: 3
+          # Liveness is deliberately decoupled from the database (see /api/health):
+          # this endpoint used to be /api/beverages, so DB latency or CFS throttling
+          # (see resources below) could kill and restart the container repeatedly.
           livenessProbe:
             httpGet:
-              path: /api/beverages
+              path: /api/health
               port: 5000
-            initialDelaySeconds: 10
-            periodSeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /api/beverages
               port: 5000
-            initialDelaySeconds: 5
             periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           resources:
             requests:
               cpu: 50m
               memory: 128Mi
+            # No CPU limit: gunicorn's 4 workers booting together were being
+            # CFS-throttled ~99% of the time under a 500m limit (usage was only
+            # ~0.1 core on average), which delayed startup past the liveness probe
+            # and caused a continuous restart loop. The request still guarantees a
+            # CPU share; there's no limit for the node scheduler to throttle against.
             limits:
-              cpu: 500m
               memory: 512Mi
 ---
 apiVersion: v1
